@@ -1,5 +1,7 @@
 package com.tugas.unscollab.ui.screens.internship
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,16 +42,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.rememberNavBackStack
+import coil.compose.AsyncImage
+import com.tugas.unscollab.R
+import com.tugas.unscollab.data.model.Internship
+import com.tugas.unscollab.data.repository.CompanyRepository
 import com.tugas.unscollab.data.repository.InternshipRepository
 import com.tugas.unscollab.ui.components.header.HeaderDetail
 import com.tugas.unscollab.ui.components.button.PrimaryButton
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InternshipDetailScreen(route: Routes.InternshipDetailRoute = Routes.InternshipDetailRoute(id = 1)) {
-    val internship = InternshipRepository().getInternship().find { it.idInternship == route.id } ?: return
+fun InternshipDetailScreen(route: Routes.InternshipDetailRoute) {
+    val internship = InternshipRepository.getInternships().find { it.idInternship == route.id }
 
     Scaffold(
         topBar = {
@@ -68,78 +77,71 @@ fun InternshipDetailScreen(route: Routes.InternshipDetailRoute = Routes.Internsh
         ) {
             item {
                 InternshipDetailContent(
-                    image = internship.image,
-                    title = internship.title,
-                    companyName = internship.companyName,
-                    workMode = internship.workMode,
-                    location = internship.location,
-                    duration = internship.duration ?: "",
-                    description = internship.description ?: "",
-                    deadline = internship.deadline,
-                    status = internship.vacancyStatus ?: "",
-                    paymentStatus = internship.paymentStatus ?: "",
-                    internshipQuota = internship.internshipQuota,
-                    requirement = internship.requirement ?: "",
-                    benefit = internship.benefit ?: ""
+                    internship = internship!!,
+                    onClickApply = {}
                 )
             }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun InternshipDetailContent(
-    image: Int,
-    title: String,
-    companyName: String,
-    workMode: String,
-    location: String,
-    duration: String,
-    description: String,
-    deadline: String,
-    status: String,
-    paymentStatus: String,
-    internshipQuota: Int,
-    requirement: String,
-    benefit: String
-
+    internship: Internship,
+    onClickApply: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+
+        val companyName = CompanyRepository.getCompanies().find {
+            it.idCompany == internship.idCompany
+        }?.companyName ?: "Company Not Found"
+
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+        val deadline = LocalDate.parse(internship.deadline, formatter)
+
+        val status = if (LocalDate.now().isBefore(deadline) || LocalDate.now().isEqual(deadline)) {
+            "Open"
+        } else {
+            "Closed"
+        }
+
         TitleSection(
-            image = image,
-            title = title,
+            imageUrl = internship.image,
+            title = internship.title,
             companyName = companyName,
-            workMode = workMode,
-            location = location,
-            duration = duration
+            workMode = internship.workMode,
+            location = internship.location,
+            duration = internship.duration
         )
 
         ContentSection(
             icon = Icons.Default.Description,
             title = "Description",
-            value = description
+            value = internship.description
         )
 
         InformationSection(
-            deadline = deadline,
+            deadline = internship.deadline,
             status = status,
-            paymentStatus = paymentStatus,
-            internshipQuota = internshipQuota,
+            paymentStatus = internship.paymentStatus,
+            quota = internship.quota,
         )
 
         ContentSection(
             icon = Icons.AutoMirrored.Filled.ViewList,
             title = "Requirement",
-            value = requirement
+            value = internship.requirement
         )
 
         ContentSection(
             icon = Icons.Default.Work,
             title = "Benefit",
-            value = benefit
+            value = internship.benefit
         )
 
         PrimaryButton(
@@ -154,7 +156,7 @@ private fun InternshipDetailContent(
 
 @Composable
 private fun TitleSection(
-    image: Int,
+    imageUrl: String? = null,
     title: String,
     companyName: String,
     workMode: String,
@@ -169,12 +171,14 @@ private fun TitleSection(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            Image(
-                painter = painterResource(image),
+            AsyncImage(
+                model = imageUrl,
                 contentDescription = null,
+                placeholder = painterResource(R.drawable.logo_unscollab),
+                error = painterResource(R.drawable.logo_unscollab),
+                fallback = painterResource(R.drawable.logo_unscollab),
                 modifier = Modifier
                     .size(128.dp)
-                    .clip(RoundedCornerShape(8.dp))
             )
 
             Column(
@@ -326,7 +330,7 @@ private fun InformationSection(
     deadline: String,
     status: String,
     paymentStatus: String,
-    internshipQuota: Int
+    quota: Int
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -366,7 +370,7 @@ private fun InformationSection(
             InfoDetail(
                 icon = Icons.Default.Person,
                 title = "Quota",
-                value = "$internshipQuota people"
+                value = "$quota people"
             )
         }
     }
@@ -439,13 +443,14 @@ private fun InfoDetail(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun PreviewInternshipDetailScreen() {
     UNSCollabTheme {
         val backStack = rememberNavBackStack(Routes.InternshipDetailRoute(id = 1))
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            InternshipDetailScreen()
+            InternshipDetailScreen(route = Routes.InternshipDetailRoute(id = 1))
         }
     }
 }

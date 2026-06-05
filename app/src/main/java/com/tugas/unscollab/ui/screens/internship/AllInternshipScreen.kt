@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,9 +60,9 @@ import com.tugas.unscollab.viewmodel.InternshipViewModel
 @Composable
 fun AllInternshipScreen(
     modifier: Modifier = Modifier,
-    viewModel: InternshipViewModel = viewModel()
+    internshipViewModel: InternshipViewModel = viewModel()
 ) {
-    val internships by viewModel.internships.collectAsState()
+    val internships by internshipViewModel.internships.collectAsState()
     val newestInternship = internships.reversed()
     
     var isBottomSheetOpen by remember {
@@ -93,7 +94,7 @@ fun AllInternshipScreen(
         ) {
             item {
                 InternshipContent(
-                    internship = newestInternship
+                    internships = newestInternship
                 )
             }
         }
@@ -122,23 +123,32 @@ private fun CustomFilter() {
 
 @Composable
 private fun InternshipContent(
-    internship: List<Internship>
+    internships: List<Internship>
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        internship.forEach { item ->
-            InternshipCard(
-                idInternship = item.idInternship,
-                title = item.title,
-                company = item.companyName,
-                type = item.vacancyStatus ?: "Open",
-                location = item.location,
-                duration = item.duration ?: "",
-                deadline = item.deadline,
-                image = item.image,
-                onClick = {}
-            )
+        if(internships.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                Text(text = "No internship available")
+            }
+        } else {
+            internships.forEach { internship ->
+                InternshipCard(
+                    internship = internship,
+
+                    isApplied = false,
+                    dateApply = null,
+                    statusInternship = null,
+
+                    onClickApply = {},
+                    onClickDelete = {}
+                )
+            }
         }
     }
 }
@@ -186,7 +196,6 @@ private fun ProvincesFilter() {
                     )
                 },
                 modifier = Modifier
-                    .menuAnchor()
                     .fillMaxWidth()
             )
 

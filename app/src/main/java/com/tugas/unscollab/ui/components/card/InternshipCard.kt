@@ -1,7 +1,6 @@
 package com.tugas.unscollab.ui.components.card
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,28 +34,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.rememberNavBackStack
+import coil.compose.AsyncImage
 import com.tugas.unscollab.R
+import com.tugas.unscollab.data.model.Internship
+import com.tugas.unscollab.data.repository.CompanyRepository
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 
 @Composable
 fun InternshipCard(
-    idInternship: Int,
-    title: String,
-    company: String,
-    type: String,
-    location: String,
-    duration: String,
-    deadline: String,
-    image: Int,
-    onClick: () -> Unit,
-    isDeleteButton: Boolean = false,
+    internship: Internship,
+
+    isApplied: Boolean = false,
     dateApply: String? = null,
     statusInternship: String? = null,
+
+    onClickApply: () -> Unit,
+    onClickDelete: () -> Unit,
+
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
+
+    val companyName = CompanyRepository.getCompanies().find {
+        it.idCompany == internship.idCompany
+    }?.companyName ?: "Company Not Found"
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -74,21 +77,24 @@ fun InternshipCard(
             Column(
                 modifier = Modifier
                     .clickable {
-                        backStack.add(Routes.InternshipDetailRoute(id = idInternship))
+                        backStack.add(
+                            Routes.InternshipDetailRoute(
+                                id = internship.idInternship
+                            )
+                        )
                     }
             ) {
                 HeaderInternship(
-                    image = image,
-                    isDeleteButton = isDeleteButton,
+                    imageUrl = internship.image,
                     statusInternship = statusInternship
                 )
 
                 ContentInternship(
-                    title = title,
-                    company = company,
-                    type = type,
-                    location = location,
-                    duration = duration
+                    title = internship.title,
+                    companyName = companyName,
+                    workMode = internship.workMode,
+                    location = internship.location,
+                    duration = internship.duration
                 )
             }
 
@@ -97,10 +103,11 @@ fun InternshipCard(
             )
 
             FooterInternship(
-                deadline = deadline,
-                onClick = onClick,
-                isDeleteButton = isDeleteButton,
-                dateApply = dateApply
+                deadline = internship.deadline,
+                isApplied = isApplied,
+                dateApply = dateApply,
+                onClickApply = onClickApply,
+                onClickDelete = onClickDelete
             )
         }
     }
@@ -108,8 +115,7 @@ fun InternshipCard(
 
 @Composable
 private fun HeaderInternship(
-    image: Int,
-    isDeleteButton: Boolean = false,
+    imageUrl: String? = null,
     statusInternship: String? = null
 ) {
     Row(
@@ -118,54 +124,35 @@ private fun HeaderInternship(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        Image(
-            painter = painterResource(image),
+        AsyncImage(
+            model = imageUrl,
             contentDescription = null,
+            placeholder = painterResource(R.drawable.logo_unscollab),
+            error = painterResource(R.drawable.logo_unscollab),
+            fallback = painterResource(R.drawable.logo_unscollab),
             modifier = Modifier
                 .size(64.dp)
         )
 
         if(statusInternship != null) {
-            if(statusInternship == "Accepted") {
-                Text(
-                    text = statusInternship,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFF2E7D32),
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(horizontal = 8.dp)
-                )
-            } else if (statusInternship == "Pending") {
-                Text(
-                    text = statusInternship,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFFF8E05D),
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(horizontal = 8.dp)
-                )
-            } else {
-                Text(
-                    text = statusInternship,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(
-                            color = Color.Red,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(horizontal = 8.dp)
-                )
+            val backgroundColor = when (statusInternship) {
+                "Accepted" -> Color(0xFF2E7D32)
+                "Pending" -> Color(0xFFF8E05D)
+                else -> Color.Red
             }
+
+            Text(
+                text = statusInternship,
+                color = Color.White,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(
+                        color = backgroundColor,
+                        shape = RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = 8.dp)
+            )
         } else {
             Text(
                 text = "INTERNSHIP",
@@ -186,8 +173,8 @@ private fun HeaderInternship(
 @Composable
 private fun ContentInternship(
     title: String,
-    company: String,
-    type: String,
+    companyName: String,
+    workMode: String,
     location: String,
     duration: String
 ) {
@@ -210,7 +197,7 @@ private fun ContentInternship(
             )
 
             Text(
-                text = "$company - $type",
+                text = "$companyName - $workMode",
                 fontSize = 10.sp,
                 color = Color.Gray,
                 modifier = Modifier
@@ -269,9 +256,10 @@ private fun ContentInternship(
 @Composable
 private fun FooterInternship(
     deadline: String,
-    onClick: () -> Unit,
-    isDeleteButton: Boolean = false,
-    dateApply: String? = null
+    isApplied: Boolean,
+    dateApply: String? = null,
+    onClickApply: () -> Unit,
+    onClickDelete: () -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -285,7 +273,7 @@ private fun FooterInternship(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            if(isDeleteButton) {
+            if(isApplied) {
                 Text(
                     text = "Applied: $dateApply",
                     fontSize = 10.sp,
@@ -294,7 +282,7 @@ private fun FooterInternship(
                 )
 
                 OutlinedButton(
-                    onClick = onClick,
+                    onClick = onClickDelete,
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(
                         1.dp,
@@ -313,7 +301,6 @@ private fun FooterInternship(
                         tint = Color.Red,
                         modifier = Modifier
                             .size(16.dp)
-                            .clickable {}
                     )
                 }
             } else {
@@ -325,7 +312,7 @@ private fun FooterInternship(
                 )
 
                 OutlinedButton(
-                    onClick = onClick,
+                    onClick = onClickApply,
                     shape = RoundedCornerShape(8.dp),
                     border = BorderStroke(
                         1.dp,
@@ -342,9 +329,7 @@ private fun FooterInternship(
                         text = "Apply",
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp,
-                        modifier = Modifier
-                            .clickable {}
+                        fontSize = 10.sp
                     )
                 }
             }
@@ -356,21 +341,36 @@ private fun FooterInternship(
 @Composable
 private fun PreviewInternshipCard() {
     UNSCollabTheme {
+
         val backStack = rememberNavBackStack(Routes.HomeRoute)
-        CompositionLocalProvider(LocalBackStack provides backStack) {
+
+        CompositionLocalProvider(
+            LocalBackStack provides backStack
+        ) {
+
             InternshipCard(
-                idInternship = 1,
-                title = "Frontend Developer Intern",
-                company = "PT Tokopedia",
-                type = "Remote",
-                location = "Jakarta",
-                duration = "3 months",
-                deadline = "12 June",
-                image = R.drawable.logo_uns,
-                onClick = {},
-                isDeleteButton = true,
-                dateApply = "12 June",
-                statusInternship = "Rejected"
+                internship = Internship(
+                    idInternship = 1,
+                    idCompany = 1,
+                    title = "Android Developer Intern",
+                    description = "Membantu pengembangan aplikasi Android Tokopedia.",
+                    requirement = "Menguasai Kotlin.",
+                    benefit = "Sertifikat, mentoring, uang saku.",
+                    quota = 3,
+                    location = "Jawa Tengah",
+                    workMode = "Hybrid",
+                    duration = "4 Bulan",
+                    paymentStatus = "Paid",
+                    deadline = "2026-07-01",
+                    image = null
+                ),
+
+                isApplied = true,
+                dateApply = "2026-06-30",
+                statusInternship = "Accepted",
+
+                onClickApply = {},
+                onClickDelete = {}
             )
         }
     }

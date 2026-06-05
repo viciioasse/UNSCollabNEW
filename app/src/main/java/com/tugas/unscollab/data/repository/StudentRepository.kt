@@ -2,128 +2,129 @@ package com.tugas.unscollab.data.repository
 
 import com.tugas.unscollab.data.model.Student
 
-class StudentRepository {
+object StudentRepository {
+
     fun getStudents(): List<Student> {
         return listOf(
+
             Student(
                 idStudent = 1,
-                idUser = 101,
+                idUser = 1,
                 fullName = "Budi Santoso",
                 nim = "M0521001",
                 major = "Informatika",
-                bio = "Mahasiswa aktif yang tertarik pada backend development dan cloud computing.",
-                portfolio = "github.com/budi-santoso",
-                experience = "Backend Developer Intern di startup lokal",
-                skill = "Kotlin, Java, Spring Boot",
-                profilePicture = null
+                bio = "Mahasiswa yang tertarik pada pengembangan aplikasi Android.",
+                portfolio = "github.com/budisantoso",
+                experience = "Asisten Praktikum Pemrograman Mobile",
+                skill = "Kotlin, Jetpack Compose, Laravel"
             ),
+
             Student(
                 idStudent = 2,
-                idUser = 102,
+                idUser = 2,
                 fullName = "Siti Aisyah",
                 nim = "M0521002",
-                major = "Sistem Informasi",
-                bio = "Fokus pada UI/UX design dan pengembangan aplikasi mobile.",
+                major = "Informatika",
+                bio = "UI/UX Designer dengan pengalaman desain aplikasi mobile.",
                 portfolio = "behance.net/sitiaisyah",
-                experience = "UI/UX Designer freelance",
-                skill = "Figma, Adobe XD, UI Design",
-                profilePicture = null
+                experience = "UI Designer Intern",
+                skill = "Figma, Canva, Adobe XD"
             ),
+
             Student(
                 idStudent = 3,
-                idUser = 103,
-                fullName = "Andi Pratama",
+                idUser = 3,
+                fullName = "Ahmad Fauzan",
                 nim = "M0521003",
                 major = "Informatika",
-                bio = "Pengembang Android yang suka membuat aplikasi produktivitas.",
-                portfolio = "github.com/andi-pratama",
-                experience = "Android Developer intern",
-                skill = "Kotlin, Android Studio, Jetpack Compose",
-                profilePicture = null
+                bio = "Backend Developer yang fokus pada REST API.",
+                portfolio = "github.com/ahmadfauzan",
+                experience = "Backend Developer Freelance",
+                skill = "Laravel, MySQL, PHP"
             ),
+
             Student(
                 idStudent = 4,
-                idUser = 104,
-                fullName = "Rina Kartika",
+                idUser = 4,
+                fullName = "Dinda Permata",
                 nim = "M0521004",
-                major = "Teknik Komputer",
-                bio = "Tertarik pada jaringan komputer dan keamanan sistem.",
-                portfolio = "linkedin.com/in/rinakartika",
-                experience = "Network assistant lab kampus",
-                skill = "Networking, Cyber Security Basics",
-                profilePicture = null
+                major = "Sistem Informasi",
+                bio = "Data Analyst dan Business Intelligence Enthusiast.",
+                portfolio = "linkedin.com/in/dindapermata",
+                experience = "Data Analyst Intern",
+                skill = "Python, Power BI, SQL"
             ),
+
             Student(
                 idStudent = 5,
-                idUser = 105,
-                fullName = "Dewi Lestari",
+                idUser = 5,
+                fullName = "Rizky Pratama",
                 nim = "M0521005",
                 major = "Informatika",
-                bio = "Mobile developer yang fokus pada aplikasi e-commerce.",
-                portfolio = "github.com/dewilestari",
-                experience = "Freelance mobile developer",
-                skill = "Flutter, Kotlin, REST API",
-                profilePicture = null
+                bio = "Frontend Developer yang menyukai pengembangan web modern.",
+                portfolio = "github.com/rizkypratama",
+                experience = "Frontend Developer Freelance",
+                skill = "ReactJS, TailwindCSS, JavaScript"
             ),
+
             Student(
                 idStudent = 6,
-                idUser = 106,
-                fullName = "Fajar Nugroho",
+                idUser = 6,
+                fullName = "Putri Maharani",
                 nim = "M0521006",
                 major = "Sistem Informasi",
-                bio = "Data enthusiast yang tertarik pada data analysis dan machine learning.",
-                portfolio = "kaggle.com/fajarnugroho",
-                experience = "Data analyst intern",
-                skill = "Python, SQL, Machine Learning",
-                profilePicture = null
+                bio = "Project Manager untuk berbagai proyek kampus.",
+                portfolio = "linkedin.com/in/putrimaharani",
+                experience = "Project Manager Organisasi",
+                skill = "Leadership, Scrum, Jira"
             ),
+
             Student(
                 idStudent = 7,
-                idUser = 107,
-                fullName = "Maya Sari",
+                idUser = 7,
+                fullName = "Bagas Nugroho",
                 nim = "M0521007",
                 major = "Informatika",
-                bio = "Frontend developer yang fokus pada web modern.",
-                portfolio = "github.com/mayasari",
-                experience = "Frontend intern",
-                skill = "HTML, CSS, JavaScript, React",
-                profilePicture = null
+                bio = "Machine Learning Enthusiast.",
+                portfolio = "github.com/bagasnugroho",
+                experience = "AI Research Assistant",
+                skill = "Python, TensorFlow, Scikit-Learn"
             ),
+
             Student(
                 idStudent = 8,
-                idUser = 108,
-                fullName = "Rizky Maulana",
+                idUser = 8,
+                fullName = "Nabila Zahra",
                 nim = "M0521008",
-                major = "Teknik Komputer",
-                bio = "Suka eksplorasi IoT dan embedded system.",
-                portfolio = "github.com/rizkymaulana",
-                experience = "IoT project assistant",
-                skill = "C++, Arduino, IoT",
-                profilePicture = null
+                major = "Informatika",
+                bio = "Mobile Developer yang fokus pada Android.",
+                portfolio = "github.com/nabilazahra",
+                experience = "Android Developer Intern",
+                skill = "Kotlin, Firebase, Compose"
             ),
+
             Student(
                 idStudent = 9,
-                idUser = 109,
-                fullName = "Nadia Putri",
+                idUser = 9,
+                fullName = "Farhan Akbar",
                 nim = "M0521009",
                 major = "Sistem Informasi",
-                bio = "UI/UX enthusiast dengan minat besar pada desain produk digital.",
-                portfolio = "dribbble.com/nadiaputri",
-                experience = "UI/UX intern",
-                skill = "Figma, User Research, Prototyping",
-                profilePicture = null
+                bio = "Cyber Security Enthusiast.",
+                portfolio = "github.com/farhanakbar",
+                experience = "Security Analyst Intern",
+                skill = "Network Security, Linux, OWASP"
             ),
+
             Student(
                 idStudent = 10,
-                idUser = 110,
-                fullName = "Ilham Ramadhan",
+                idUser = 10,
+                fullName = "Alya Safitri",
                 nim = "M0521010",
                 major = "Informatika",
-                bio = "Backend developer yang fokus pada scalable system.",
-                portfolio = "github.com/ilhamramadhan",
-                experience = "Backend intern di startup",
-                skill = "Go, Kotlin, Microservices",
-                profilePicture = null
+                bio = "Fullstack Developer yang menyukai pengembangan aplikasi web dan mobile.",
+                portfolio = "github.com/alyasafitri",
+                experience = "Fullstack Developer Freelance",
+                skill = "Laravel, Kotlin, ReactJS"
             )
         )
     }

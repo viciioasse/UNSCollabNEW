@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class TeamViewModel : ViewModel() {
 
-    private val repository: TeamRepository = TeamRepository()
+    private val repository: TeamRepository = TeamRepository
 
     private var _teams = MutableStateFlow<List<Team>>(emptyList())
 
@@ -23,7 +23,7 @@ class TeamViewModel : ViewModel() {
 
     private fun loadTeams() {
         viewModelScope.launch {
-            val data = repository.getTeam()
+            val data = repository.getTeams()
             _teams.value = data
         }
     }

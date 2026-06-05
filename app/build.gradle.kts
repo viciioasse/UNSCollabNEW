@@ -70,6 +70,8 @@ dependencies {
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.kotlinx.serialization.core)
 
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     //connect db coba tim
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

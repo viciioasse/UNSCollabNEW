@@ -75,21 +75,33 @@ fun AllTeamScreen(
                 .background(Color(0xFFF5F6FA)),
             contentAlignment = Alignment.Center
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(all = 16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(newestTeams) { team ->
-                    TeamCard(
-                        team = team,
-                        onClickJoin = {
-                            // Handle join logic
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            if(teams.isEmpty()) {
+                Text(
+                    text = "No team available",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(all = 16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(newestTeams) { team ->
+                        TeamCard(
+                            team = team,
+
+                            isJoin = false,
+                            dateJoin = null,
+                            statusJoin = null,
+
+                            onClickJoin = {},
+                            onClickDelete = {}
+                        )
+                    }
                 }
             }
         }

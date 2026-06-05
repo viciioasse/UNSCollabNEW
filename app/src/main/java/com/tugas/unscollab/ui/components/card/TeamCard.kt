@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,14 +14,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -31,10 +34,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.rememberNavBackStack
+import coil.compose.AsyncImage
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
-import com.tugas.unscollab.data.model.User
+import com.tugas.unscollab.data.repository.TeamMemberRepository
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
@@ -42,7 +46,14 @@ import com.tugas.unscollab.ui.theme.UNSCollabTheme
 @Composable
 fun TeamCard(
     team: Team,
+
+    isJoin: Boolean = false,
+    dateJoin: String? = null,
+    statusJoin: String? = null,
+
     onClickJoin: () -> Unit,
+    onClickDelete: () -> Unit,
+
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
@@ -66,9 +77,12 @@ fun TeamCard(
                         backStack.add(Routes.TeamDetailRoute(id = team.idTeam))
                     }
             ) {
-                ImageTeam()
+                HeaderTeam(
+                    imageUrl = team.teamLogo,
+                    statusJoin = statusJoin
+                )
 
-                ContentTeam(team)
+                ContentTeam(team = team)
             }
 
             HorizontalDivider(
@@ -76,22 +90,71 @@ fun TeamCard(
             )
 
             FooterTeam(
-                currentmember = team.currentMember,
                 maxMember = team.maxMember,
-                onClickJoin = onClickJoin
+                isJoin = isJoin,
+                dateJoin = dateJoin,
+                onClickJoin = onClickJoin,
+                onClickDelete = onClickDelete
             )
         }
     }
 }
 
 @Composable
-private fun ImageTeam() {
-    Image(
-        painter = painterResource(R.drawable.logo_uns),
-        contentDescription = null,
+private fun HeaderTeam(
+    imageUrl: String? = null,
+    statusJoin: String? = null
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
         modifier = Modifier
-            .size(32.dp)
-    )
+            .fillMaxWidth()
+    ) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.logo_unscollab),
+            error = painterResource(R.drawable.logo_unscollab),
+            fallback = painterResource(R.drawable.logo_unscollab),
+            modifier = Modifier
+                .size(64.dp)
+        )
+
+        if(statusJoin != null) {
+            val backgroundColor = when (statusJoin) {
+                "Accepted" -> Color(0xFF2E7D32)
+                "Pending" -> Color(0xFFF8E05D)
+                else -> Color.Red
+            }
+
+            Text(
+                text = statusJoin,
+                color = Color.White,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(
+                        color = backgroundColor,
+                        shape = RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = 8.dp)
+            )
+        } else {
+            Text(
+                text = "TEAM",
+                color = Color(0xFF2E7D32),
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(
+                        color = Color(0xFFEEF7ED),
+                        shape = RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = 8.dp)
+            )
+        }
+    }
 }
 
 @Composable
@@ -107,7 +170,7 @@ private fun ContentTeam(
                 .fillMaxWidth()
         ) {
             Text(
-                text = team.nameTeam,
+                text = team.teamName,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
@@ -141,43 +204,71 @@ private fun ContentTeam(
 
 @Composable
 private fun FooterTeam(
-    currentmember: Int,
     maxMember: Int,
-    onClickJoin: () -> Unit
+    isJoin: Boolean,
+    dateJoin: String? = null,
+    onClickJoin: () -> Unit,
+    onClickDelete: () -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
     ) {
         Text(
-            text = "$currentmember/$maxMember Members",
+            text = "$maxMember Members",
             fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.Gray
         )
 
-        OutlinedButton(
-            onClick = onClickJoin,
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-            border = BorderStroke(
-                1.dp,
-                Color.LightGray
-            ),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = Color.White
-            ),
-            contentPadding = PaddingValues(0.dp),
-            modifier = Modifier
-                .height(32.dp)
-                .width(48.dp)
-        ) {
-            Text(
-                text = "Join",
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp
-            )
+        if(isJoin) {
+            OutlinedButton(
+                onClick = onClickDelete,
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(
+                    1.dp,
+                    Color.LightGray
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White
+                ),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .height(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = Color.Red,
+                    modifier = Modifier
+                        .size(16.dp)
+                )
+            }
+        } else {
+            OutlinedButton(
+                onClick = onClickJoin,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                border = BorderStroke(
+                    1.dp,
+                    Color.LightGray
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White
+                ),
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .height(32.dp)
+                    .width(48.dp)
+            ) {
+                Text(
+                    text = "Join",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp
+                )
+            }
         }
     }
 }
@@ -195,34 +286,27 @@ fun TeamCardPreview() {
             TeamCard(
                 team = Team(
                     idTeam = 1,
-                    nameTeam = "UNSCollab Mobile Team",
+                    creatorId = 1,
+                    teamName = "UNSCollab Mobile Team",
                     category = "Mobile Development",
                     description = "Membuat aplikasi kolaborasi mahasiswa menggunakan Jetpack Compose dan Firebase.",
                     requirement = "Menguasai Kotlin dan Jetpack Compose",
                     maxMember = 10,
-                    currentMember = 5,
                     deadline = "10 Juni 2026",
                     tag = listOf(
                         "Kotlin",
                         "Compose",
                         "Firebase"
                     ),
-                    createAt = "2 Juni 2026",
-                    leaderTeam = Student(
-                        idStudent = 1,
-                        idUser = 1,
-                        nim = "H123456789",
-                        fullName = "John Doe",
-                        major = "Informatika",
-                        bio = "Android Developer",
-                        portfolio = "github.com/johndoe",
-                        experience = "2 Tahun Android Development",
-                        skill = "Kotlin, Compose, Firebase",
-                        profilePicture = "",
-                    ),
-                    member = listOf()
+                    createAt = "2 Juni 2026"
                 ),
-                onClickJoin = {}
+
+                isJoin = true,
+                dateJoin = "2026-06-02",
+                statusJoin = "Accepted",
+
+                onClickJoin = {},
+                onClickDelete = {}
             )
         }
     }

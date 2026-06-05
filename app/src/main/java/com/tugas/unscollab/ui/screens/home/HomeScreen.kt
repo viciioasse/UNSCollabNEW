@@ -152,19 +152,27 @@ private fun InternshipSection(
             title = "See All Internships",
             onAllClick = { backStack.add(Routes.AllInternshipRoute) }
         )
+        if(internships.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                Text(text = "No internship available")
+            }
+        } else {
+            internships.forEach { internship ->
+                InternshipCard(
+                    internship = internship,
 
-        internships.forEach { item ->
-            InternshipCard(
-                idInternship = item.idInternship,
-                title = item.title,
-                company = item.companyName,
-                type = item.workMode,
-                location = item.location,
-                duration = item.duration ?: "-",
-                deadline = item.deadline,
-                image = item.image,
-                onClick = { }
-            )
+                    isApplied = false,
+                    dateApply = null,
+                    statusInternship = null,
+
+                    onClickApply = {},
+                    onClickDelete = {}
+                )
+            }
         }
     }
 }
@@ -198,12 +206,18 @@ private fun TeamSection(
                 userScrollEnabled = false,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(620.dp)
+                    .height(720.dp)
             ) {
-                items(teams) { item ->
+                items(teams) { team ->
                     TeamCard(
-                        team = item,
-                        onClickJoin = {}
+                        team = team,
+
+                        isJoin = false,
+                        dateJoin = null,
+                        statusJoin = null,
+
+                        onClickJoin = {},
+                        onClickDelete = {}
                     )
                 }
             }

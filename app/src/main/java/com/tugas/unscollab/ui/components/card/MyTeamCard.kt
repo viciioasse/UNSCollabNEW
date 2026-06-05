@@ -28,24 +28,38 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.rememberNavBackStack
+import coil.compose.AsyncImage
 import com.tugas.unscollab.R
+import com.tugas.unscollab.data.model.Student
+import com.tugas.unscollab.data.model.Team
+import com.tugas.unscollab.data.repository.StudentRepository
+import com.tugas.unscollab.data.repository.TeamMemberRepository
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 
 @Composable
 fun MyTeamCard(
-    idTeam: Int,
-    image: Int,
-    teamName: String,
-    category: String,
-    currentmember: Int,
-    maxMember: Int,
-    requested: List<String>,
+    team: Team,
+
     onClickAccept: () -> Unit,
     onClickDecline: () -> Unit,
+
     modifier: Modifier = Modifier
 ) {
+    val currentmember = TeamMemberRepository.getTeamMembers().count() {
+        it.idTeam == team.idTeam && it.joinStatus == "Accepted"
+    }
+
+    val requests = TeamMemberRepository.getTeamMembers().filter {
+        it.idTeam == team.idTeam && it.joinStatus == "Pending"
+    }
+        .mapNotNull { teamMember ->
+            StudentRepository.getStudents().find {
+                it.idStudent == teamMember.idStudent
+        }
+    }
+
     val backStack = LocalBackStack.current
 
     Card(
@@ -62,11 +76,11 @@ fun MyTeamCard(
                 .padding(8.dp)
         ) {
             HeaderTeam(
-                image = image,
-                teamName = teamName,
-                category = category,
+                imageUrl = team.teamLogo,
+                teamName = team.teamName,
+                category = team.category,
                 currentmember = currentmember,
-                maxMember = maxMember
+                maxMember = team.maxMember
             )
 
             HorizontalDivider(
@@ -74,7 +88,7 @@ fun MyTeamCard(
             )
 
             RequestJoin(
-                requested = requested,
+                requests = requests,
                 onClickAccept = onClickAccept,
                 onClickDecline = onClickDecline
             )
@@ -84,7 +98,7 @@ fun MyTeamCard(
 
 @Composable
 private fun HeaderTeam(
-    image: Int,
+    imageUrl: String? = null,
     teamName: String,
     category: String,
     currentmember: Int,
@@ -100,9 +114,11 @@ private fun HeaderTeam(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(image),
+            AsyncImage(
+                model = imageUrl,
                 contentDescription = null,
+                placeholder = painterResource(R.drawable.logo_unscollab),
+                error = painterResource(R.drawable.logo_unscollab),
                 modifier = Modifier
                     .size(64.dp)
             )
@@ -130,7 +146,7 @@ private fun HeaderTeam(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Anggota",
+                text = "Member",
                 color = Color.Gray,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
@@ -159,7 +175,7 @@ private fun HeaderTeam(
 
 @Composable
 private fun RequestJoin(
-    requested: List<String>,
+    requests: List<Student>,
     onClickAccept: () -> Unit,
     onClickDecline: () -> Unit
 ) {
@@ -176,7 +192,7 @@ private fun RequestJoin(
             color = Color.Black
         )
 
-        requested.forEach {item ->
+        requests.forEach {request ->
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -184,11 +200,31 @@ private fun RequestJoin(
                     .padding(8.dp)
                     .fillMaxWidth()
             ) {
-                Text(
-                    text = item,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+                Row() {
+                    AsyncImage(
+                        model = request.profilePicture,
+                        contentDescription = null,
+                        placeholder = painterResource(R.drawable.logo_unscollab),
+                        error = painterResource(R.drawable.logo_unscollab),
+                        modifier = Modifier
+                            .size(48.dp)
+                    )
+
+                    Column() {
+                        Text(
+                            text = request.fullName,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+
+                        Text(
+                            text = request.nim.toString(),
+                            fontSize = 10.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -231,15 +267,24 @@ fun GreetingPreview() {
         val backStack = rememberNavBackStack(Routes.HomeRoute)
         CompositionLocalProvider(LocalBackStack provides backStack) {
             MyTeamCard(
-                1,
-                R.drawable.logo_uns,
-                "MobiDev UNS",
-                "PKM - PI",
-                4,
-                5,
-                listOf("A", "B", "C"),
-                {},
-                {}
+                team = Team(
+                    idTeam = 1,
+                    creatorId = 1,
+                    teamName = "UNSCollab Mobile Team",
+                    category = "Mobile Development",
+                    description = "Membuat aplikasi kolaborasi mahasiswa menggunakan Jetpack Compose dan Firebase.",
+                    requirement = "Menguasai Kotlin dan Jetpack Compose",
+                    maxMember = 10,
+                    deadline = "10 Juni 2026",
+                    tag = listOf(
+                        "Kotlin",
+                        "Compose",
+                        "Firebase"
+                    ),
+                    createAt = "2 Juni 2026"
+                ),
+                onClickAccept = {},
+                onClickDecline = {}
             )
         }
     }

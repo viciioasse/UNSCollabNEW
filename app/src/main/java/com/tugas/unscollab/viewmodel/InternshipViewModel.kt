@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class InternshipViewModel (
-    private val repository: InternshipRepository = InternshipRepository()
+    private val repository: InternshipRepository = InternshipRepository
 ) : ViewModel() {
     private val _internships = MutableStateFlow<List<Internship>>(emptyList())
     val internships: StateFlow<List<Internship>> = _internships
@@ -20,7 +20,7 @@ class InternshipViewModel (
 
     private fun loadInternships() {
         viewModelScope.launch {
-            val data = repository.getInternship()
+            val data = repository.getInternships()
             _internships.value = data
         }
     }
