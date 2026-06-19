@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LaptopWindows
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -33,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,33 +45,53 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.tugas.unscollab.data.model.Internship
+import com.tugas.unscollab.data.response.InternshipResponse
 import com.tugas.unscollab.ui.components.bottomSheet.CustomBottomSheet
+import com.tugas.unscollab.ui.components.button.PrimaryButton
+import com.tugas.unscollab.ui.components.button.SecondaryButton
 import com.tugas.unscollab.ui.components.header.HeaderScreen
 import com.tugas.unscollab.ui.components.card.InternshipCard
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
-import com.tugas.unscollab.viewmodel.InternshipViewModel
+import com.tugas.unscollab.viewmodel.internship.AllInternshipViewModel
+
+@Composable
+fun AllInternshipScreen(
+    allInternshipViewModel: AllInternshipViewModel = viewModel()
+) {
+    val internships by allInternshipViewModel.internships.collectAsState()
+    val isLoading by allInternshipViewModel.isLoading.collectAsState()
+    val errorMessage by allInternshipViewModel.errorMessage.collectAsState()
+
+    LaunchedEffect(Unit) {
+        allInternshipViewModel.fetchInternships()
+    }
+
+    AllInternshipScreenContent(
+        internships = internships,
+        isLoading = isLoading,
+        errorMessage = errorMessage
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AllInternshipScreen(
-    modifier: Modifier = Modifier,
-    internshipViewModel: InternshipViewModel = viewModel()
+fun AllInternshipScreenContent(
+    internships: List<InternshipResponse>,
+    isLoading: Boolean,
+    errorMessage: String?
 ) {
-    val internships by internshipViewModel.internships.collectAsState()
     val newestInternship = internships.reversed()
-    
-    var isBottomSheetOpen by remember {
+    var isFilterSheetOpen by remember {
         mutableStateOf(false)
     }
-
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -78,77 +100,113 @@ fun AllInternshipScreen(
                 value = "",
                 onValueChange = {},
                 placeholder = "Search internship",
+                onSearchClick = {},
                 onFilterClick = {
-                    isBottomSheetOpen = true
+                    isFilterSheetOpen = true
                 }
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(Color(0xFFF5F6FA))
-        ) {
-            item {
-                InternshipContent(
-                    internships = newestInternship
-                )
-            }
-        }
+        AllInternshipContent(
+            internships = newestInternship,
+            isLoading = isLoading,
+            errorMessage = errorMessage,
+            innerPadding = innerPadding
+        )
     }
 
-    if(isBottomSheetOpen) {
+    if (isFilterSheetOpen) {
         CustomBottomSheet(
-            isBottomSheetOpen = isBottomSheetOpen,
-            onDismiss = { isBottomSheetOpen = false },
-            sheetState = sheetState,
-            CustomFilter = { CustomFilter() }
+            isBottomSheetOpen = isFilterSheetOpen,
+            onDismiss = { isFilterSheetOpen = false },
+            sheetState = filterSheetState,
+            customFunction = { FilterInternship() }
         )
     }
 }
 
 @Composable
-private fun CustomFilter() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+private fun AllInternshipContent(
+    internships: List<InternshipResponse>,
+    isLoading: Boolean,
+    errorMessage: String?,
+    innerPadding: PaddingValues
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .background(Color(0xFFF5F6FA)),
+        contentAlignment = Alignment.Center
     ) {
-        ProvincesFilter()
-        WorkModeFilter()
-        StatusFilter()
+        when {
+            isLoading -> CircularProgressIndicator()
+            errorMessage != null -> Text(
+                text = "Error: $errorMessage",
+                color = Color.Red,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            internships.isEmpty() -> Text(
+                text = "No internship available",
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            else -> LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(all = 16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                items(internships) { internship ->
+                    InternshipCard(
+                        internshipResponse = internship,
+
+                        dateApply = null,
+                        statusInternship = null,
+                        actionButton = {}
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun InternshipContent(
-    internships: List<Internship>
-) {
+private fun FilterInternship() {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if(internships.isEmpty()) {
-            Box(
+        Text(
+            text = "Filter"
+        )
+
+        ProvincesFilter()
+
+        WorkModeFilter()
+
+        StatusFilter()
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            SecondaryButton(
+                text = "Reset",
+                onButtonClick = {},
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            ) {
-                Text(text = "No internship available")
-            }
-        } else {
-            internships.forEach { internship ->
-                InternshipCard(
-                    internship = internship,
+                    .weight(1f)
+            )
 
-                    isApplied = false,
-                    dateApply = null,
-                    statusInternship = null,
-
-                    onClickApply = {},
-                    onClickDelete = {}
-                )
-            }
+            PrimaryButton(
+                text = "Apply",
+                onButtonClick = {},
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .weight(1f)
+            )
         }
     }
 }
@@ -196,6 +254,7 @@ private fun ProvincesFilter() {
                     )
                 },
                 modifier = Modifier
+                    .menuAnchor()
                     .fillMaxWidth()
             )
 
@@ -350,12 +409,11 @@ private fun WorkModeChip(
     onClickSelected: () ->  Unit
 ) {
     val icon =
-        if (title == "Onsite")
-            Icons.Outlined.Business
-        else if (title == "Remote")
-            Icons.Outlined.Home
-        else
-            Icons.Outlined.LaptopWindows
+        when (title) {
+            "Onsite" -> Icons.Outlined.Business
+            "Remote" -> Icons.Outlined.Home
+            else -> Icons.Outlined.LaptopWindows
+        }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -393,7 +451,11 @@ fun PreviewAllInternshipScreen() {
     UNSCollabTheme {
         val backStack = rememberNavBackStack(Routes.AllInternshipRoute)
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            AllInternshipScreen()
+            AllInternshipScreenContent(
+                internships = emptyList(),
+                isLoading = false,
+                errorMessage = null
+            )
         }
     }
 }

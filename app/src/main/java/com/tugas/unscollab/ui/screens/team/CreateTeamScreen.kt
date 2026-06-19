@@ -1,5 +1,8 @@
 package com.tugas.unscollab.ui.screens.team
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,41 +26,224 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.tugas.unscollab.ui.components.textField.CustomTextField
 import com.tugas.unscollab.ui.components.button.PrimaryButton
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
+import com.tugas.unscollab.viewmodel.team.CreateTeamViewModel
 
 @Composable
-fun CreateTeamScreen() {
+fun CreateTeamScreen(
+    createTeamViewModel: CreateTeamViewModel = viewModel()
+) {
+    val errorMessage by createTeamViewModel.errorMessage.collectAsState()
+    val isLoading by createTeamViewModel.isLoading.collectAsState()
+
+    var teamName by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var maxMembers by remember { mutableStateOf("") }
+    var deadline by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var requirement by remember { mutableStateOf("") }
+    var tag by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     Scaffold(
         topBar = {
             HeaderCreateTeam()
         }
-    ) {innerPadding ->
+    ) { innerPadding ->
+        CreateTeamContent(
+            isLoading = isLoading,
+            errorMessage = errorMessage,
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(Color.White)
-        ) {
-            item {
-                CreateTeamContent()
+            teamName = teamName,
+            onTeamNameChange = { teamName = it },
+            category = category,
+            onCategoryChange = { category = it },
+            maxMembers = maxMembers,
+            onMaxMembersChange = { maxMembers = it },
+            deadline = deadline,
+            onDeadlineChange = { deadline = it },
+            description = description,
+            onDescriptionChange = { description = it },
+            requirement = requirement,
+            onRequirementChange = { requirement = it },
+            tag = tag,
+            onTagChange = { tag = it },
+            selectedImageUri = selectedImageUri,
+            onSelectedImage = { selectedImageUri = it },
+
+
+            innerPadding = innerPadding,
+            createTeamViewModel = createTeamViewModel
+        )
+    }
+}
+
+@Composable
+private fun CreateTeamContent(
+    isLoading: Boolean,
+    errorMessage: String?,
+    teamName: String,
+    onTeamNameChange: (String) -> Unit,
+
+    category: String,
+    onCategoryChange: (String) -> Unit,
+
+    maxMembers: String,
+    onMaxMembersChange: (String) -> Unit,
+
+    deadline: String,
+    onDeadlineChange: (String) -> Unit,
+
+    description: String,
+    onDescriptionChange: (String) -> Unit,
+
+    requirement: String,
+    onRequirementChange: (String) -> Unit,
+
+    tag: String,
+    onTagChange: (String) -> Unit,
+
+    selectedImageUri: Uri?,
+    onSelectedImage: (Uri?) -> Unit,
+
+    innerPadding: PaddingValues,
+    createTeamViewModel: CreateTeamViewModel
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .background(Color.White)
+    ) {
+
+        item {
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                UploadImageField(
+                    selectedImageUri = selectedImageUri,
+                    onSelectedImage = onSelectedImage
+                )
+
+                FormCreateTeam(
+                    title = "Team Name",
+                    placeholder = "Enter Team Name",
+                    value = teamName,
+                    onValueChange = onTeamNameChange
+                )
+
+                FormCreateTeam(
+                    title = "Category",
+                    placeholder = "Enter Category",
+                    value = category,
+                    onValueChange = onCategoryChange
+                )
+
+                FormCreateTeam(
+                    title = "Maximum Members",
+                    placeholder = "Enter Max Members",
+                    value = maxMembers,
+                    onValueChange = onMaxMembersChange
+                )
+
+                FormCreateTeam(
+                    title = "Deadline",
+                    placeholder = "yyyy-MM-dd",
+                    value = deadline,
+                    onValueChange = onDeadlineChange
+                )
+
+                FormCreateTeam(
+                    title = "Description",
+                    placeholder = "Enter Description",
+                    value = description,
+                    onValueChange = onDescriptionChange,
+                    modifier = Modifier.height(150.dp)
+                )
+
+                FormCreateTeam(
+                    title = "Requirement",
+                    placeholder = "Enter Requirement",
+                    value = requirement,
+                    onValueChange = onRequirementChange,
+                    modifier = Modifier.height(150.dp)
+                )
+
+                FormCreateTeam(
+                    title = "Tag",
+                    placeholder = "Enter Tag",
+                    value = tag,
+                    onValueChange = onTagChange
+                )
+
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color.Red
+                    )
+                }
+
+                PrimaryButton(
+                    text = if (isLoading) {
+                        "Creating..."
+                    } else {
+                        "Create Team"
+                    },
+                    onButtonClick = {
+
+                        if (
+                            teamName.isBlank() ||
+                            category.isBlank() ||
+                            maxMembers.isBlank() ||
+                            deadline.isBlank()
+                        ) return@PrimaryButton
+
+                        createTeamViewModel.createTeam(
+                            teamName = teamName,
+                            category = category,
+                            maxMember = maxMembers.toInt(),
+                            deadline = deadline,
+                            description = description,
+                            requirement = requirement,
+                            tag = "",
+                            imageUri = selectedImageUri
+                        )
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
+
 }
 
 @Composable
@@ -84,7 +270,7 @@ private fun HeaderCreateTeam() {
             modifier = Modifier
                 .size(32.dp)
                 .clickable {
-                    backStack.add(Routes.HomeRoute)
+                    backStack.removeLastOrNull()
                 }
         )
 
@@ -98,60 +284,19 @@ private fun HeaderCreateTeam() {
 }
 
 @Composable
-private fun CreateTeamContent() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+private fun UploadImageField(
+    selectedImageUri: Uri?,
+    onSelectedImage: (Uri?) -> Unit
+) {
+    val context = LocalContext.current
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
     ) {
-
-        UploadImageField()
-
-        FormCreateTeam(
-            title = "Team Name",
-            placeholder = "Enter Name"
-        )
-
-        FormCreateTeam(
-            title = "Category",
-            placeholder = "Enter Category"
-        )
-
-        FormCreateTeam(
-            title = "Maximum Members",
-            placeholder = "Enter Max Members"
-        )
-
-        FormCreateTeam(
-            title = "Deadline",
-            placeholder = "Enter Deadline"
-        )
-
-        FormCreateTeam(
-            title = "Description",
-            placeholder = "Enter Description",
-            modifier = Modifier
-                .height(150.dp)
-        )
-
-        FormCreateTeam(
-            title = "Requirement",
-            placeholder = "Enter Requirement",
-            modifier = Modifier
-                .height(150.dp)
-        )
-
-        PrimaryButton(
-            text = "Create Team",
-            onButtonClick = {},
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-        )
+            uri: Uri? ->
+        onSelectedImage(uri)
     }
-}
 
-@Composable
-private fun UploadImageField() {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -165,37 +310,51 @@ private fun UploadImageField() {
                 color = Color.LightGray,
                 shape = RoundedCornerShape(8.dp)
             )
+            .clip(RoundedCornerShape(8.dp))
             .clickable {
-
+                imagePickerLauncher.launch(arrayOf("image/jpeg", "image/png"))
             }
     ) {
-        Column (
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.CloudUpload,
+        if(selectedImageUri != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(selectedImageUri)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = null,
-                tint = Color(0xFF1FABE1),
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(32.dp)
+                    .fillMaxSize()
             )
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+        } else {
+            Column (
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Upload Team Logo",
-                    color = Color.LightGray,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
+                Icon(
+                    imageVector = Icons.Default.CloudUpload,
+                    contentDescription = null,
+                    tint = Color(0xFF1FABE1),
+                    modifier = Modifier
+                        .size(32.dp)
                 )
 
-                Text(
-                    text = "PNG, JPG (Max 2MB)",
-                    color = Color.LightGray,
-                    fontSize = 12.sp
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Upload Team Logo",
+                        color = Color.LightGray,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        text = "PNG, JPG (Max 2MB)",
+                        color = Color.LightGray,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     }
@@ -205,6 +364,8 @@ private fun UploadImageField() {
 private fun FormCreateTeam(
     title: String,
     placeholder: String,
+    value: String,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -218,8 +379,8 @@ private fun FormCreateTeam(
         )
 
         CustomTextField(
-            value = "",
-            onValueChange = {},
+            value = value,
+            onValueChange = onValueChange,
             placeholder = placeholder,
             modifier = modifier
         )
@@ -236,3 +397,4 @@ fun CreateTeamScreenPreview() {
         }
     }
 }
+

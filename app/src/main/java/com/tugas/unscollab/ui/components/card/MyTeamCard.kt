@@ -1,7 +1,6 @@
 package com.tugas.unscollab.ui.components.card
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,35 +31,19 @@ import coil.compose.AsyncImage
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
-import com.tugas.unscollab.data.repository.StudentRepository
-import com.tugas.unscollab.data.repository.TeamMemberRepository
+import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 
 @Composable
 fun MyTeamCard(
-    team: Team,
-
-    onClickAccept: () -> Unit,
-    onClickDecline: () -> Unit,
+    teamResponse: TeamResponse,
+    onClickAccept: (Student) -> Unit,
+    onClickDecline: (Student) -> Unit,
 
     modifier: Modifier = Modifier
 ) {
-    val currentmember = TeamMemberRepository.getTeamMembers().count() {
-        it.idTeam == team.idTeam && it.joinStatus == "Accepted"
-    }
-
-    val requests = TeamMemberRepository.getTeamMembers().filter {
-        it.idTeam == team.idTeam && it.joinStatus == "Pending"
-    }
-        .mapNotNull { teamMember ->
-            StudentRepository.getStudents().find {
-                it.idStudent == teamMember.idStudent
-        }
-    }
-
-    val backStack = LocalBackStack.current
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -76,11 +59,11 @@ fun MyTeamCard(
                 .padding(8.dp)
         ) {
             HeaderTeam(
-                imageUrl = team.teamLogo,
-                teamName = team.teamName,
-                category = team.category,
-                currentmember = currentmember,
-                maxMember = team.maxMember
+                imageUrl = teamResponse.team.team_logo,
+                teamName = teamResponse.team.team_name,
+                category = teamResponse.team.category,
+                currentmember = teamResponse.currentMember,
+                maxMember = teamResponse.team.max_member
             )
 
             HorizontalDivider(
@@ -88,7 +71,7 @@ fun MyTeamCard(
             )
 
             RequestJoin(
-                requests = requests,
+                requests = teamResponse.members,
                 onClickAccept = onClickAccept,
                 onClickDecline = onClickDecline
             )
@@ -176,8 +159,8 @@ private fun HeaderTeam(
 @Composable
 private fun RequestJoin(
     requests: List<Student>,
-    onClickAccept: () -> Unit,
-    onClickDecline: () -> Unit
+    onClickAccept: (Student) -> Unit,
+    onClickDecline: (Student) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -200,9 +183,12 @@ private fun RequestJoin(
                     .padding(8.dp)
                     .fillMaxWidth()
             ) {
-                Row() {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     AsyncImage(
-                        model = request.profilePicture,
+                        model = request.profile_picture,
                         contentDescription = null,
                         placeholder = painterResource(R.drawable.logo_unscollab),
                         error = painterResource(R.drawable.logo_unscollab),
@@ -212,7 +198,7 @@ private fun RequestJoin(
 
                     Column() {
                         Text(
-                            text = request.fullName,
+                            text = request.full_name,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black
@@ -227,10 +213,10 @@ private fun RequestJoin(
                 }
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     OutlinedButton(
-                        onClick = onClickAccept,
+                        onClick = { onClickAccept(request) },
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, Color(0xFF2E7D32))
                     ) {
@@ -243,7 +229,7 @@ private fun RequestJoin(
                     }
 
                     OutlinedButton(
-                        onClick = onClickDecline,
+                        onClick = { onClickDecline(request) },
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, Color(0xFFFF3B30))
                     ) {
@@ -262,27 +248,50 @@ private fun RequestJoin(
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MyTeamCardPreview() {
+    val team = Team(
+        id_team = "1",
+        id_creator = "1",
+        team_name = "UNSCollab Mobile Team",
+        category = "Mobile Development",
+        description = "Membuat aplikasi kolaborasi mahasiswa",
+        requirement = "Kotlin & Compose",
+        max_member = 10,
+        deadline = "2026-06-10",
+        tag = "Android, Kotlin, Java",
+        created_at = "2026-06-01",
+        team_logo = null
+    )
+
+    val requests = listOf(
+        Student(
+            id_student = "1",
+            id_user = "1",
+            full_name = "Budi Santoso",
+            nim = "M0522001",
+            major = "Informatika"
+        ),
+        Student(
+            id_student = "2",
+            id_user = "2",
+            full_name = "Andi Wijaya",
+            nim = "M0522002",
+            major = "Informatika"
+        )
+    )
+
+    val teamResponse = TeamResponse(
+        team = team,
+        creatorName = "Creator Preview",
+        currentMember = 4,
+        members = requests
+    )
+
     UNSCollabTheme {
         val backStack = rememberNavBackStack(Routes.HomeRoute)
         CompositionLocalProvider(LocalBackStack provides backStack) {
             MyTeamCard(
-                team = Team(
-                    idTeam = 1,
-                    creatorId = 1,
-                    teamName = "UNSCollab Mobile Team",
-                    category = "Mobile Development",
-                    description = "Membuat aplikasi kolaborasi mahasiswa menggunakan Jetpack Compose dan Firebase.",
-                    requirement = "Menguasai Kotlin dan Jetpack Compose",
-                    maxMember = 10,
-                    deadline = "10 Juni 2026",
-                    tag = listOf(
-                        "Kotlin",
-                        "Compose",
-                        "Firebase"
-                    ),
-                    createAt = "2 Juni 2026"
-                ),
+                teamResponse = teamResponse,
                 onClickAccept = {},
                 onClickDecline = {}
             )

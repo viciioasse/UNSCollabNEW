@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,12 +19,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -48,28 +49,58 @@ import com.tugas.unscollab.ui.theme.UNSCollabTheme
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Internship
 import com.tugas.unscollab.data.model.Team
+import com.tugas.unscollab.data.response.InternshipResponse
+import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.components.textField.SearchBar
 import com.tugas.unscollab.ui.components.text.SectionHeader
 import com.tugas.unscollab.ui.components.card.TeamCard
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
-import com.tugas.unscollab.viewmodel.InternshipViewModel
-import com.tugas.unscollab.viewmodel.TeamViewModel
+import com.tugas.unscollab.viewmodel.home.HomeViewModel
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier,
-    internshipViewModel: InternshipViewModel = viewModel(),
-    teamViewModel: TeamViewModel = viewModel()
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
-    val internships by internshipViewModel.internships.collectAsState()
-    val teams by teamViewModel.teams.collectAsState()
+    val internships by homeViewModel.internships.collectAsState()
+    val isLoadingInternship by homeViewModel.isLoadingInternship.collectAsState()
+    val errorInternship by homeViewModel.errorInternship.collectAsState()
+
+    val teams by homeViewModel.teams.collectAsState()
+    val isLoadingTeam by homeViewModel.isLoadingTeam.collectAsState()
+    val errorTeam by homeViewModel.errorTeam.collectAsState()
 
     val newestInternship = internships.takeLast(5).reversed()
     val newestTeams = teams.takeLast(6).reversed()
 
     val backStack = LocalBackStack.current
 
+    LaunchedEffect(Unit) {
+        homeViewModel.fetchInternships()
+        homeViewModel.fetchTeams()
+    }
+
+    HomeScreenContent(
+        internships = newestInternship,
+        isLoadingInternship = isLoadingInternship,
+        errorInternship = errorInternship,
+        teams = newestTeams,
+        isLoadingTeam = isLoadingTeam,
+        errorTeam = errorTeam,
+        backStack = backStack
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    internships: List<InternshipResponse>,
+    isLoadingInternship: Boolean,
+    errorInternship: String?,
+    teams: List<TeamResponse>,
+    isLoadingTeam: Boolean,
+    errorTeam: String?,
+    backStack: NavBackStack<NavKey>
+) {
     Scaffold(
         bottomBar = {
             BottomBar(
@@ -85,10 +116,9 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
-
         LazyColumn(
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(all = 16.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -97,18 +127,70 @@ fun HomeScreen(
             item {
                 HeaderSection()
             }
+
             item {
-                InternshipSection(
-                    internships = newestInternship,
-                    backStack = backStack
+                SectionHeader(
+                    title = "See All Internships",
+                    onAllClick = { backStack.add(Routes.AllInternshipRoute) }
                 )
+                when {
+                    isLoadingInternship ->
+                        CircularProgressIndicator()
+
+                    errorInternship != null ->
+                        Text(
+                            "Error: $errorInternship",
+                            color = Color.Red
+                        )
+
+                    internships.isEmpty() -> Text("No internship available")
+                    else -> Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        internships.forEach { internshipResponse ->
+                            InternshipCard(
+                                internshipResponse = internshipResponse,
+                                isApplied = false,
+                                dateApply = null,
+                                statusInternship = null,
+                                actionButton = { }
+                            )
+                        }
+                    }
+                }
             }
+
             item {
-                TeamSection(
-                    teams = newestTeams,
-                    backStack = backStack
+                SectionHeader(
+                    title = "See All Teams",
+                    onAllClick = { backStack.add(Routes.AllTeamRoute) }
                 )
+                when {
+                    isLoadingTeam -> CircularProgressIndicator()
+                    errorTeam != null -> Text("Error: $errorTeam", color = Color.Red)
+                    teams.isEmpty() -> Text("No team available")
+                    else -> LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        userScrollEnabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(720.dp)
+                    ) {
+                        items(teams) { team ->
+                            TeamCard(
+                                teamResponse = team,
+                                isJoin = false,
+                                dateJoin = null,
+                                statusJoin = null,
+                                actionButton = { }
+                            )
+                        }
+                    }
+                }
             }
+
             item {
                 ButtonCreateTeam(
                     onClick = { backStack.add(Routes.CreateTeamRoute) }
@@ -140,92 +222,6 @@ private fun HeaderSection() {
 }
 
 @Composable
-private fun InternshipSection(
-    internships: List<Internship>,
-    backStack: NavBackStack<NavKey>
-) {
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        SectionHeader(
-            title = "See All Internships",
-            onAllClick = { backStack.add(Routes.AllInternshipRoute) }
-        )
-        if(internships.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            ) {
-                Text(text = "No internship available")
-            }
-        } else {
-            internships.forEach { internship ->
-                InternshipCard(
-                    internship = internship,
-
-                    isApplied = false,
-                    dateApply = null,
-                    statusInternship = null,
-
-                    onClickApply = {},
-                    onClickDelete = {}
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TeamSection(
-    teams: List<Team>,
-    backStack: NavBackStack<NavKey>
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        SectionHeader(
-            title = "See All Teams",
-            onAllClick = { backStack.add(Routes.AllTeamRoute) }
-        )
-
-        if(teams.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            ) {
-                Text(text = "No team available")
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                userScrollEnabled = false,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(720.dp)
-            ) {
-                items(teams) { team ->
-                    TeamCard(
-                        team = team,
-
-                        isJoin = false,
-                        dateJoin = null,
-                        statusJoin = null,
-
-                        onClickJoin = {},
-                        onClickDelete = {}
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ButtonCreateTeam(
     onClick: () -> Unit
 ) {
@@ -247,7 +243,7 @@ private fun ButtonCreateTeam(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-        ){
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -268,15 +264,60 @@ private fun ButtonCreateTeam(
     }
 }
 
-
-
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     UNSCollabTheme {
         val backStack = rememberNavBackStack(Routes.HomeRoute)
-            CompositionLocalProvider(LocalBackStack provides backStack) {
-                HomeScreen()
-            }
+        CompositionLocalProvider(LocalBackStack provides backStack) {
+            HomeScreenContent(
+                internships = listOf(
+                    InternshipResponse(
+                        internship = Internship(
+                            id_internship = "1",
+                            id_company = "1",
+                            id_admin = "1",
+                            title = "Software Engineer Intern",
+                            description = "Description",
+                            requirement = "Requirement",
+                            benefit = "Benefit",
+                            approval_status = "Approved",
+                            quota = 5,
+                            location = "Jakarta",
+                            work_mode = "Remote",
+                            duration = "3 Months",
+                            payment_status = "Paid",
+                            deadline = "2023-12-31",
+                            posted_at = "2023-01-01"
+                        ),
+                        companyName = "Tech Corp"
+                    )
+                ),
+                isLoadingInternship = false,
+                errorInternship = null,
+                teams = listOf(
+                    TeamResponse(
+                        team = Team(
+                            id_team = "1",
+                            id_creator = "1",
+                            team_name = "Tech Innovators",
+                            category = "Competition",
+                            description = "Description",
+                            requirement = "Requirement",
+                            max_member = 5,
+                            deadline = "2023-12-31",
+                            tag = "Android, Kotlin",
+                            created_at = "2023-01-01"
+                        ),
+                        creatorName = "John Doe",
+                        currentMember = 2,
+                        members = emptyList()
+                    )
+                ),
+                isLoadingTeam = false,
+                errorTeam = null,
+                backStack = backStack
+            )
+        }
     }
 }

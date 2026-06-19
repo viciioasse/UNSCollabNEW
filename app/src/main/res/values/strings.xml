@@ -35,4 +35,6 @@
     <string name="title_activity_custom_bottom_sheet">CustomBottomSheet</string>
     <string name="title_activity_filter_bottom_sheet">FilterBottomSheet</string>
     <string name="title_activity_my_team_card">MyTeamCard</string>
+    <string name="title_activity_apply_button">ApplyButton</string>
+    <string name="title_activity_delete_button">DeleteButton</string>
 </resources>

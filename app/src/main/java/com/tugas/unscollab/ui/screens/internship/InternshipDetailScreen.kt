@@ -1,10 +1,16 @@
 package com.tugas.unscollab.ui.screens.internship
 
+import android.net.Uri
 import android.os.Build
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LaptopWindows
@@ -25,80 +32,127 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Work
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
 import coil.compose.AsyncImage
 import com.tugas.unscollab.R
-import com.tugas.unscollab.data.model.Internship
-import com.tugas.unscollab.data.repository.CompanyRepository
-import com.tugas.unscollab.data.repository.InternshipRepository
+import com.tugas.unscollab.data.response.InternshipResponse
+import com.tugas.unscollab.ui.components.bottomSheet.CustomBottomSheet
 import com.tugas.unscollab.ui.components.header.HeaderDetail
 import com.tugas.unscollab.ui.components.button.PrimaryButton
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
+import com.tugas.unscollab.viewmodel.internship.InternshipDetailViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InternshipDetailScreen(route: Routes.InternshipDetailRoute) {
-    val internship = InternshipRepository.getInternships().find { it.idInternship == route.id }
+fun InternshipDetailScreen(
+    route: Routes.InternshipDetailRoute,
+    internshipDetailViewModel: InternshipDetailViewModel = viewModel()
+) {
+    val selectedInternship by internshipDetailViewModel.selectedInternship.collectAsState()
+    val isLoading by internshipDetailViewModel.isLoading.collectAsState()
+    val errorMessage by internshipDetailViewModel.errorMessage.collectAsState()
+
+    var isBottomSheetOpen by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    val sheetState = rememberModalBottomSheetState()
+
+    LaunchedEffect(route.id) {
+        internshipDetailViewModel.getInternshipById(route.id)
+    }
 
     Scaffold(
         topBar = {
             HeaderDetail(
-                title = "Detail Internship"
+                title = "Detail Internship",
+                onBookmarkClick = {}
             )
         }
     ) {innerPadding ->
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(Color(0xFFF5F6FA))
-        ) {
-            item {
-                InternshipDetailContent(
-                    internship = internship!!,
-                    onClickApply = {}
-                )
+        when {
+            isLoading -> Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            errorMessage != null -> Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                Text(text = errorMessage ?: "Unknown Error", color = Color.Red)
+            }
+            selectedInternship != null -> LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(all = 16.dp),
+                modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFFF5F6FA))
+            ) {
+                item {
+                    InternshipContent(
+                        internshipResponse = selectedInternship!!,
+                        onClickApply = { isBottomSheetOpen = true }
+                    )
+                }
             }
         }
+    }
+
+    if(isBottomSheetOpen) {
+        CustomBottomSheet(
+            isBottomSheetOpen = isBottomSheetOpen,
+            onDismiss = { isBottomSheetOpen = false },
+            sheetState = sheetState,
+            customFunction = {
+                uploadFunction(
+                    idInternship = route.id,
+                    internshipDetailViewModel = internshipDetailViewModel
+                )
+            }
+        )
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun InternshipDetailContent(
-    internship: Internship,
+private fun InternshipContent(
+    internshipResponse: InternshipResponse,
     onClickApply: () -> Unit
 ) {
+    val internship = internshipResponse.internship
+    val companyName = internshipResponse.companyName
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        val companyName = CompanyRepository.getCompanies().find {
-            it.idCompany == internship.idCompany
-        }?.companyName ?: "Company Not Found"
 
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -114,7 +168,7 @@ private fun InternshipDetailContent(
             imageUrl = internship.image,
             title = internship.title,
             companyName = companyName,
-            workMode = internship.workMode,
+            workMode = internship.work_mode,
             location = internship.location,
             duration = internship.duration
         )
@@ -128,7 +182,7 @@ private fun InternshipDetailContent(
         InformationSection(
             deadline = internship.deadline,
             status = status,
-            paymentStatus = internship.paymentStatus,
+            paymentStatus = internship.payment_status,
             quota = internship.quota,
         )
 
@@ -146,7 +200,7 @@ private fun InternshipDetailContent(
 
         PrimaryButton(
             text = "Apply Now",
-            onButtonClick = {},
+            onButtonClick = onClickApply,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -443,14 +497,175 @@ private fun InfoDetail(
     }
 }
 
+@Composable
+private fun uploadFunction(
+    idInternship: String,
+    internshipDetailViewModel: InternshipDetailViewModel = viewModel()
+) {
+    var CVuri by remember { mutableStateOf<Uri?>(null)}
+    var CoverLetterUri by remember { mutableStateOf<Uri?>(null)}
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(all = 16.dp)
+    ) {
+        Text(
+            text = "Apply Internship",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        UploadDocumentField(
+            label = "Upload CV",
+            selectedFileUri = CVuri,
+            onSelectedFile = { CVuri = it }
+        )
+
+        UploadDocumentField(
+            label = "Upload Cover Letter",
+            selectedFileUri = CoverLetterUri,
+            onSelectedFile = { CoverLetterUri = it }
+        )
+
+        PrimaryButton(
+            text = "Submit Application",
+            onButtonClick = {
+                internshipDetailViewModel.applyInternship(
+                    idInternship = idInternship,
+                    cvUri = CVuri,
+                    coverLetterUri = CoverLetterUri
+                )
+            },
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun UploadDocumentField(
+    label: String,
+    selectedFileUri: Uri?,
+    onSelectedFile: (Uri?) -> Unit
+){
+    val context = LocalContext.current
+
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) {
+        uri: Uri? ->
+        onSelectedFile(uri)
+    }
+
+    val fileName = remember(selectedFileUri) {
+        selectedFileUri?.let { uri ->
+            var name = "Unknown File"
+
+            context.contentResolver.query(
+                uri,
+                null,
+                null,
+                null,
+                null
+            )?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+
+                if(cursor.moveToFirst() && nameIndex >= 0) {
+                    name = cursor.getString(nameIndex)
+                }
+            }
+
+            name
+        }
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+
+        Text(
+            text = label,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    1.dp,
+                    Color.LightGray,
+                    RoundedCornerShape(8.dp)
+                )
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    documentPickerLauncher.launch(
+                        arrayOf(
+                            "application/pdf",
+                            "application/msword",
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        )
+                    )
+                }
+                .padding(16.dp)
+        ) {
+
+            if (selectedFileUri == null) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudUpload,
+                        contentDescription = null,
+                        tint = Color(0xFF1FABE1)
+                    )
+
+                    Text(
+                        text = "Upload $label",
+                        color = Color.Gray
+                    )
+
+                    Text(
+                        text = "PDF, DOC, DOCX",
+                        fontSize = 12.sp,
+                        color = Color.LightGray
+                    )
+                }
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = Color(0xFF1FABE1)
+                    )
+
+                    Text(
+                        text = fileName ?: "Document Selected",
+                        color = Color.Black
+                    )
+                }
+            }
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun PreviewInternshipDetailScreen() {
     UNSCollabTheme {
-        val backStack = rememberNavBackStack(Routes.InternshipDetailRoute(id = 1))
+        val backStack = rememberNavBackStack(Routes.InternshipDetailRoute(id = ""))
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            InternshipDetailScreen(route = Routes.InternshipDetailRoute(id = 1))
+            InternshipDetailScreen(route = Routes.InternshipDetailRoute(id = ""))
         }
     }
 }

@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,17 +35,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.tugas.unscollab.data.response.InternshipResponse
+import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.components.bottomBar.BottomBar
+import com.tugas.unscollab.ui.components.card.InternshipCard
+import com.tugas.unscollab.ui.components.card.MyTeamCard
+import com.tugas.unscollab.ui.components.card.TeamCard
 import com.tugas.unscollab.ui.components.header.HeaderScreen
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
+import com.tugas.unscollab.viewmodel.activity.ActivityViewModel
 
 @Composable
-fun ActivityScreen() {
+fun ActivityScreen(
+    activityViewModel: ActivityViewModel = hiltViewModel()
+) {
 
     var selected by remember { mutableStateOf("My Team") }
+
+    val isLoading by activityViewModel.isLoading.collectAsState()
+    val errorMessage by activityViewModel.errorMessage.collectAsState()
+
+    val myCreatedTeams by activityViewModel.myCreatedTeams.collectAsState()
+    val appliedInternships by activityViewModel.appliedInternships.collectAsState()
+    val requestedTeams by activityViewModel.requestedTeams.collectAsState()
 
     val backStack = LocalBackStack.current
     Scaffold(
@@ -83,7 +103,9 @@ fun ActivityScreen() {
             )
             when(selected) {
                 "My Team" -> {
-                    MyTeamContent()
+                    MyTeamContent(
+                        teams = myCreatedTeams
+                    )
                 }
 
                 "Internship" -> {
@@ -162,17 +184,52 @@ private fun ActivityTabSelected(
 }
 
 @Composable
-private fun MyTeamContent() {
-
+private fun MyTeamContent(
+    teams: List<TeamResponse> = emptyList()
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(all = 16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        items(teams) { team ->
+            MyTeamCard(
+                teamResponse = team,
+                onClickAccept = {},
+                onClickDecline = {}
+            )
+        }
+    }
 }
 
 @Composable
-private fun InternshipContent() {
+private fun InternshipContent(
+    internships: List<InternshipResponse> = emptyList()
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(all = 16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        items(internships) { internship ->
+            InternshipCard(
+                internshipResponse = internship,
 
+                isApplied = true,
+                dateApply = "2026-06-02",
+                statusInternship = "Accepted"
+            )
+
+        }
+    }
 }
 
 @Composable
-private fun TeamContent() {
+private fun TeamContent(
+    teams: List<TeamResponse> = emptyList()
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -181,7 +238,14 @@ private fun TeamContent() {
         modifier = Modifier
             .fillMaxSize()
     ) {
-
+        items(teams) { team ->
+            TeamCard(
+                teamResponse = team,
+                isJoin = true,
+                dateJoin = "2026-06-02",
+                statusJoin = "Accepted"
+            )
+        }
     }
 }
 

@@ -1,10 +1,9 @@
 package com.tugas.unscollab.ui.screens.team
 
-
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,12 +22,15 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,79 +51,86 @@ import coil.compose.AsyncImage
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
-import com.tugas.unscollab.data.repository.StudentRepository
-import com.tugas.unscollab.data.repository.TeamMemberRepository
-import com.tugas.unscollab.data.repository.TeamRepository
+import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.components.CustomAlertDialog
 import com.tugas.unscollab.ui.components.button.PrimaryButton
 import com.tugas.unscollab.ui.components.header.HeaderDetail
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
-import com.tugas.unscollab.viewmodel.TeamViewModel
+import com.tugas.unscollab.viewmodel.team.TeamDetailViewModel
 
 @Composable
-fun TeamDetailScreen(route: Routes.TeamDetailRoute) {
-    val team = TeamRepository.getTeams().find { it.idTeam == route.id }
+fun TeamDetailScreen(
+    route: Routes.TeamDetailRoute,
+    teamDetailViewModel: TeamDetailViewModel = viewModel ()
+) {
+    val selectedTeam by teamDetailViewModel.selectedTeam.collectAsState()
+    val isLoading by teamDetailViewModel.isLoading.collectAsState()
+    val errorMessage by teamDetailViewModel.errorMessage.collectAsState()
+
+    LaunchedEffect(route.id) {
+        teamDetailViewModel.getTeamById(route.id)
+    }
 
     Scaffold(
         topBar = {
             HeaderDetail(
-                title = "Detail Team"
+                title = "Detail Team",
+                onBookmarkClick = {}
             )
         }
     ) {innerPadding ->
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(all = 16.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(Color(0xFFF5F6FA))
-        ) {
-            item {
-                TeamDetailContent(
-                    team = team!!,
-                    onClickJoin = {}
-                )
+        when {
+            isLoading -> Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            errorMessage != null -> Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                Text(text = errorMessage ?: "Unknown Error", color = Color.Red)
+            }
+            selectedTeam != null -> LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(Color(0xFFF5F6FA))
+            ) {
+                item {
+                    TeamDetailContent(
+                        teamResponse = selectedTeam!!,
+                        onClickJoin = {
+                            teamDetailViewModel.joinTeam(selectedTeam!!.team.id_team)
+                        }
+                    )
+                }
             }
         }
     }
 }
 
+
 @Composable
 private fun TeamDetailContent(
-    team: Team,
+    teamResponse: TeamResponse,
     onClickJoin: () -> Unit
 ) {
     var showDialog by remember {
         mutableStateOf(false)
     }
 
-    val leaderTeam = StudentRepository.getStudents().find {
-        it.idStudent == team.creatorId
-    }?.fullName ?: "Leader Team Not Found"
-
-    val currentMember = TeamMemberRepository.getTeamMembers().count {
-        it.idTeam == team.idTeam && it.joinStatus == "Accepted"
-    }
-
-    val member = TeamMemberRepository.getTeamMembers().filter{
-        it.idTeam == team.idTeam && it.joinStatus == "Accepted"
-    }
-        .mapNotNull { teamMember ->
-            StudentRepository.getStudents().find {
-                it.idStudent == teamMember.idStudent
-            }
-        }
+    val team = teamResponse.team
+    val creatorName = teamResponse.creatorName
+    val currentMember = teamResponse.currentMember
+    val members = teamResponse.members
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         TitleSection(
-            imageUrl = team.teamLogo,
-            nameTeam = team.teamName,
+            imageUrl = team.team_logo,
+            nameTeam = team.team_name,
             category = team.category,
             tag = team.tag
         )
@@ -134,9 +143,9 @@ private fun TeamDetailContent(
 
         InformationSection(
             deadline = team.deadline,
-            leaderTeam = leaderTeam,
+            leaderTeam = creatorName,
             currentMember = currentMember,
-            maxMember = team.maxMember
+            maxMember = team.max_member
         )
 
         ContentSection(
@@ -146,7 +155,7 @@ private fun TeamDetailContent(
         )
 
         MemberSection(
-            member = member
+            member = members
         )
 
         PrimaryButton(
@@ -167,6 +176,7 @@ private fun TeamDetailContent(
             confirmText = "Yes",
             dismissText = "No",
             onConfirm = {
+                onClickJoin()
                 showDialog = false
             },
             onDismiss = {
@@ -181,8 +191,14 @@ private fun TitleSection(
     imageUrl: String? = null,
     nameTeam: String,
     category: String,
-    tag: List<String>
+    tag: String // Diubah ke String untuk menerima data mentah
 ) {
+    // Memproses string tag (misal: "Android, Kotlin") menjadi List
+    val tagList = remember(tag) {
+        if (tag.isBlank()) emptyList() 
+        else tag.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -237,25 +253,27 @@ private fun TitleSection(
             }
         }
 
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            tag.forEach { item ->
-                Text(
-                    text = item,
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .background(
-                            Color(0xFF1FABE1),
-                            RoundedCornerShape(50)
-                        )
-                        .padding(start = 8.dp, end = 8.dp)
-                )
+        if (tagList.isNotEmpty()) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                tagList.forEach { item ->
+                    Text(
+                        text = item,
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .background(
+                                Color(0xFF1FABE1),
+                                RoundedCornerShape(50)
+                            )
+                            .padding(start = 8.dp, end = 8.dp)
+                    )
+                }
             }
         }
     }
@@ -330,7 +348,7 @@ private fun InformationSection(
                 title = "Member",
                 value = "$currentMember/$maxMember"
             )
-            
+
             InfoDetail(
                 icon = Icons.Default.Person,
                 title = "Leader",
@@ -452,7 +470,7 @@ private fun DetailMember(
                     )
             ) {
                 AsyncImage(
-                    model = member.profilePicture,
+                    model = member.profile_picture,
                     contentDescription = null,
                     placeholder = painterResource(R.drawable.logo_unscollab),
                     error = painterResource(R.drawable.logo_unscollab),
@@ -464,7 +482,7 @@ private fun DetailMember(
 
                 Column() {
                     Text(
-                        text = member.fullName,
+                        text = member.full_name,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -485,9 +503,41 @@ private fun DetailMember(
 @Composable
 fun PreviewTeamDetailScreen() {
     UNSCollabTheme {
-        val backStack = rememberNavBackStack(Routes.TeamDetailRoute(id = 1))
+        val backStack = rememberNavBackStack(Routes.TeamDetailRoute(id = ""))
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            TeamDetailScreen(route = Routes.TeamDetailRoute(id = 1))
+            TeamDetailContent(
+                teamResponse = TeamResponse(
+                    team = Team(
+                        id_team = "1",
+                        id_creator = "1",
+                        team_name = "Team Name",
+                        category = "Category",
+                        description = "Description",
+                        requirement = "Requirement",
+                        max_member = 5,
+                        deadline = "2023-12-31",
+                        tag = "Tag 1, Tag 2", // Preview disesuaikan menjadi String
+                        created_at = "2023-01-01"
+                    ),
+                    creatorName = "Creator Name",
+                    currentMember = 2,
+                    members = listOf(
+                        Student(
+                            id_student = "1",
+                            id_user = "1",
+                            full_name = "Member 1",
+                            nim = "M0519001"
+                        ),
+                        Student(
+                            id_student = "2",
+                            id_user = "2",
+                            full_name = "Member 2",
+                            nim = "M0519002"
+                        )
+                    )
+                ),
+                onClickJoin = {}
+            )
         }
     }
 }

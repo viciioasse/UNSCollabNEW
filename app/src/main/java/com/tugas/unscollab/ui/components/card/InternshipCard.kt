@@ -1,27 +1,21 @@
 package com.tugas.unscollab.ui.components.card
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -37,29 +31,26 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import coil.compose.AsyncImage
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Internship
-import com.tugas.unscollab.data.repository.CompanyRepository
+import com.tugas.unscollab.data.response.InternshipResponse
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 
 @Composable
 fun InternshipCard(
-    internship: Internship,
+    internshipResponse: InternshipResponse,
 
     isApplied: Boolean = false,
     dateApply: String? = null,
     statusInternship: String? = null,
-
-    onClickApply: () -> Unit,
-    onClickDelete: () -> Unit,
+    actionButton: @Composable () -> Unit = {},
 
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
 
-    val companyName = CompanyRepository.getCompanies().find {
-        it.idCompany == internship.idCompany
-    }?.companyName ?: "Company Not Found"
+    val internship = internshipResponse.internship
+    val companyName = internshipResponse.companyName
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -79,7 +70,7 @@ fun InternshipCard(
                     .clickable {
                         backStack.add(
                             Routes.InternshipDetailRoute(
-                                id = internship.idInternship
+                                id = internship.id_internship
                             )
                         )
                     }
@@ -92,7 +83,7 @@ fun InternshipCard(
                 ContentInternship(
                     title = internship.title,
                     companyName = companyName,
-                    workMode = internship.workMode,
+                    workMode = internship.work_mode,
                     location = internship.location,
                     duration = internship.duration
                 )
@@ -106,8 +97,7 @@ fun InternshipCard(
                 deadline = internship.deadline,
                 isApplied = isApplied,
                 dateApply = dateApply,
-                onClickApply = onClickApply,
-                onClickDelete = onClickDelete
+                actionButton = actionButton
             )
         }
     }
@@ -258,8 +248,7 @@ private fun FooterInternship(
     deadline: String,
     isApplied: Boolean,
     dateApply: String? = null,
-    onClickApply: () -> Unit,
-    onClickDelete: () -> Unit
+    actionButton: @Composable () -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -280,29 +269,6 @@ private fun FooterInternship(
                     fontWeight = FontWeight.Bold,
                     color = Color.Gray
                 )
-
-                OutlinedButton(
-                    onClick = onClickDelete,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(
-                        1.dp,
-                        Color.LightGray
-                    ),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White
-                    ),
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier
-                        .height(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        tint = Color.Red,
-                        modifier = Modifier
-                            .size(16.dp)
-                    )
-                }
             } else {
                 Text(
                     text = "Closed: $deadline",
@@ -310,29 +276,9 @@ private fun FooterInternship(
                     fontWeight = FontWeight.Bold,
                     color = Color.Red
                 )
-
-                OutlinedButton(
-                    onClick = onClickApply,
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(
-                        1.dp,
-                        Color.LightGray
-                    ),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color.White
-                    ),
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier
-                        .height(32.dp)
-                ) {
-                    Text(
-                        text = "Apply",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp
-                    )
-                }
             }
+
+            actionButton()
         }
     }
 }
@@ -349,28 +295,30 @@ private fun PreviewInternshipCard() {
         ) {
 
             InternshipCard(
-                internship = Internship(
-                    idInternship = 1,
-                    idCompany = 1,
-                    title = "Android Developer Intern",
-                    description = "Membantu pengembangan aplikasi Android Tokopedia.",
-                    requirement = "Menguasai Kotlin.",
-                    benefit = "Sertifikat, mentoring, uang saku.",
-                    quota = 3,
-                    location = "Jawa Tengah",
-                    workMode = "Hybrid",
-                    duration = "4 Bulan",
-                    paymentStatus = "Paid",
-                    deadline = "2026-07-01",
-                    image = null
+                internshipResponse = InternshipResponse(
+                    Internship(
+                        id_internship = "",
+                        id_company = "",
+                        id_admin = "",
+                        title = "Internship",
+                        description = "Description",
+                        requirement = "Requirement",
+                        benefit = "Benefit",
+                        approval_status = null,
+                        quota = 10,
+                        location = "Location",
+                        work_mode = "Work Mode",
+                        duration = "Duration",
+                        payment_status = "Payment Status",
+                        deadline = "Deadline",
+                        image = null,
+                        supporting_document = null,
+                        posted_at = "Posted At"
+                    ),
+                    companyName = "UNSCollab"
                 ),
 
-                isApplied = true,
-                dateApply = "2026-06-30",
-                statusInternship = "Accepted",
-
-                onClickApply = {},
-                onClickDelete = {}
+                isApplied = false
             )
         }
     }

@@ -14,7 +14,8 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.tugas.unscollab.R
 import com.tugas.unscollab.ui.components.textField.CustomTextField
 import com.tugas.unscollab.ui.components.LogoUNSCollab
@@ -37,117 +38,114 @@ import com.tugas.unscollab.ui.components.text.WelcomeText
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
+import com.tugas.unscollab.viewmodel.auth.login.LoginViewModel
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+    loginViewModel: LoginViewModel = hiltViewModel(),
+    navigateToHome: () -> Unit = {}
+) {
+    val backStack = LocalBackStack.current
+
+    val currentUser by loginViewModel.currentUser.collectAsState()
+    val currentStudent by loginViewModel.currentStudent.collectAsState()
+    val errorMessage by loginViewModel.errorMessage.collectAsState()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        loginViewModel.checkSession()
+    }
+
+    LaunchedEffect(currentUser, currentStudent) {
+        if (currentUser != null && currentStudent != null) {
+            backStack.clear()
+            backStack.add(Routes.HomeRoute)
+            navigateToHome()
+        }
+    }
+
+    LoginContent(
+        email = email,
+        password = password,
+        onEmailChange = { email = it },
+        onPasswordChange = { password = it },
+        errorMessage = errorMessage,
+        onLogin = { email, password ->
+            loginViewModel.loginStudent(
+                email,
+                password
+            )
+        }
+    )
+}
+
+@Composable
+private fun LoginContent(
+    email: String,
+    password: String,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    errorMessage: String?,
+    onLogin: (String, String) -> Unit
+) {
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .padding(16.dp)
     ) {
+
         Image(
             painter = painterResource(R.drawable.bg_auth),
             contentDescription = null,
-            modifier = Modifier
-                .matchParentSize()
+            modifier = Modifier.matchParentSize()
         )
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(48.dp, Alignment.CenterVertically),
-            modifier = Modifier
-                .fillMaxSize()
+            verticalArrangement = Arrangement.spacedBy(
+                48.dp,
+                Alignment.CenterVertically
+            ),
+            modifier = Modifier.fillMaxSize()
         ) {
+
             LogoUNSCollab()
 
-            TextFormButtonLogin(
-                email = email,
-                password = password,
-                showError = showError,
-                onEmailChange = {
-                  email = it; showError = false
-                },
-                onPasswordChange = {
-                    password = it; showError = false
-                },
-                onShowError = { showError = it }
-            )
-        }
-    }
-}
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
 
-@Composable
-private fun TextFormButtonLogin(
-    email: String,
-    password: String,
-    showError: Boolean,
-    onEmailChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onShowError: (Boolean) -> Unit
+                WelcomeText(
+                    "Welcome Back",
+                    "Sign in to continue"
+                )
 
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = Modifier
-            .padding(16.dp)
-    ) {
-        WelcomeText(
-            "Welcome Back",
-            "Sign in to continue"
-        )
+                FormLogin(
+                    email = email,
+                    password = password,
+                    errorMessage = errorMessage,
+                    onEmailChange = onEmailChange,
+                    onPasswordChange = onPasswordChange
+                )
 
-        FormButtonLogin(
-            email = email,
-            password = password,
-            showError = showError,
-            onEmailChange = onEmailChange,
-            onPasswordChange = onPasswordChange,
-            onShowError = onShowError
-        )
-    }
-}
+                PrimaryButton(
+                    text = "Login",
+                    onButtonClick = {
+                        if(email.isEmpty() || password.isEmpty()) {return@PrimaryButton}
+                        onLogin(
+                            email,
+                            password
+                        )
+                    }
+                )
 
-@Composable
-private fun FormButtonLogin(
-    email: String,
-    password: String,
-    showError: Boolean,
-    onEmailChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onShowError: (Boolean) -> Unit
-) {
-    val backStack = LocalBackStack.current
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        FormLogin(
-            email = email,
-            password = password,
-            showError = showError,
-            onEmailChange = onEmailChange,
-            onPasswordChange = onPasswordChange,
-            onShowError = onShowError
-        )
-
-        PrimaryButton(
-            "Login",
-            onButtonClick = {
-                if (email.isNotEmpty() && password.isNotEmpty()) {
-                    backStack.add(Routes.HomeRoute)
-                } else {
-                    onShowError(true)
-                }
+                LoginSSO()
             }
-        )
-
-        LoginSSO()
+        }
     }
 }
 
@@ -155,54 +153,52 @@ private fun FormButtonLogin(
 private fun FormLogin(
     email: String,
     password: String,
-    showError: Boolean,
+    errorMessage: String?,
     onEmailChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onShowError: (Boolean) -> Unit
+    onPasswordChange: (String) -> Unit
 ) {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+
         CustomTextField(
             value = email,
-            onValueChange = { onEmailChange(it); onShowError(false) },
+            onValueChange = onEmailChange,
             placeholder = "Email",
             icon = Icons.Default.Email
         )
 
         CustomTextField(
             value = password,
-            onValueChange = { onPasswordChange(it); onShowError(false) },
+            onValueChange = onPasswordChange,
             placeholder = "Password",
             icon = Icons.Default.Lock,
             isPassword = true
         )
 
-        if (showError) {
-         Text(
-             text = "Invalid email or password",
-             color = Color.Red,
-             fontSize = 12.sp,
-             modifier = Modifier
-                 .align(Alignment.Start)
-                 .padding(top = 4.dp)
+        errorMessage?.let {
+            Text(
+                text = it,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(top = 4.dp)
             )
         }
 
         Row(
             horizontalArrangement = Arrangement.End,
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = "Forgot Password?",
                 color = Color.Black,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .clickable { }
+                modifier = Modifier.clickable { }
             )
         }
     }
@@ -213,18 +209,17 @@ private fun LoginSSO() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         Text(
             text = "Or login with SSO",
             color = Color(0xFF1FABE1),
             fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
+            fontWeight = FontWeight.Bold
         )
 
         SecondaryButton(
             text = "Continue with SSO",
-            onButtonClick = { },
-
+            onButtonClick = { }
         )
     }
 }
@@ -233,9 +228,15 @@ private fun LoginSSO() {
 @Composable
 fun LoginPagePreview() {
     UNSCollabTheme {
-        val backStack = rememberNavBackStack(Routes.LoginRoute)
-        CompositionLocalProvider(LocalBackStack provides backStack) {
-            LoginScreen()
-        }
+        // Use LoginContent directly in Preview to avoid ViewModel instantiation issues.
+        // Previews cannot automatically create ViewModels with dependencies (HiltViewModels).
+        LoginContent(
+            email = "",
+            password = "",
+            onEmailChange = {},
+            onPasswordChange = {},
+            errorMessage = null,
+            onLogin = { _, _ -> }
+        )
     }
 }

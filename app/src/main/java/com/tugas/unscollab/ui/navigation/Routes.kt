@@ -39,8 +39,8 @@ object Routes {
     data object ProfileRoute : NavKey
 
     @Serializable
-    data class InternshipDetailRoute(val id: Int) : NavKey
+    data class InternshipDetailRoute(val id: String) : NavKey
 
     @Serializable
-    data class TeamDetailRoute(val id: Int) : NavKey
+    data class TeamDetailRoute(val id: String) : NavKey
 }

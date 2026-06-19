@@ -37,6 +37,7 @@ fun HeaderScreen(
     value: String,
     onValueChange: (String) -> Unit = {},
     placeholder: String,
+    onSearchClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     showFilterIcon: Boolean = true
 ) {
@@ -65,6 +66,7 @@ fun HeaderScreen(
             value = value,
             placeholder = placeholder,
             onValueChange = onValueChange,
+            onSearchClick = onSearchClick,
             onFilterClick = onFilterClick,
             showFilterIcon = showFilterIcon
         )
@@ -108,6 +110,7 @@ private fun SearchSection(
     value: String,
     placeholder: String,
     onValueChange: (String) -> Unit = {},
+    onSearchClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     showFilterIcon: Boolean = true
 ) {
@@ -144,7 +147,11 @@ private fun SearchSection(
                 Icon(
                     imageVector = Icons.Outlined.FilterAlt,
                     contentDescription = null,
-                    tint = Color.Black
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .clickable{
+                            onFilterClick()
+                        }
                 )
             }
         }

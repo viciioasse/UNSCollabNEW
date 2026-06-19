@@ -1,27 +1,18 @@
 package com.tugas.unscollab.ui.components.card
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,28 +27,26 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.rememberNavBackStack
 import coil.compose.AsyncImage
 import com.tugas.unscollab.R
-import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
-import com.tugas.unscollab.data.repository.TeamMemberRepository
+import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 
 @Composable
 fun TeamCard(
-    team: Team,
+    teamResponse: TeamResponse,
 
     isJoin: Boolean = false,
     dateJoin: String? = null,
     statusJoin: String? = null,
-
-    onClickJoin: () -> Unit,
-    onClickDelete: () -> Unit,
+    actionButton: @Composable () -> Unit = {},
 
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
 
+    val team = teamResponse.team
     Card(
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
@@ -74,11 +63,13 @@ fun TeamCard(
             Column(
                 modifier = Modifier
                     .clickable {
-                        backStack.add(Routes.TeamDetailRoute(id = team.idTeam))
+                        backStack.add(
+                            Routes.TeamDetailRoute(id = team.id_team)
+                        )
                     }
             ) {
                 HeaderTeam(
-                    imageUrl = team.teamLogo,
+                    imageUrl = team.team_logo,
                     statusJoin = statusJoin
                 )
 
@@ -90,14 +81,18 @@ fun TeamCard(
             )
 
             FooterTeam(
-                maxMember = team.maxMember,
+                maxMember = team.max_member,
                 isJoin = isJoin,
                 dateJoin = dateJoin,
-                onClickJoin = onClickJoin,
-                onClickDelete = onClickDelete
+                actionButton = actionButton,
             )
         }
     }
+}
+
+@Composable
+private fun TeamCardContent() {
+
 }
 
 @Composable
@@ -170,7 +165,7 @@ private fun ContentTeam(
                 .fillMaxWidth()
         ) {
             Text(
-                text = team.teamName,
+                text = team.team_name,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
@@ -207,8 +202,7 @@ private fun FooterTeam(
     maxMember: Int,
     isJoin: Boolean,
     dateJoin: String? = null,
-    onClickJoin: () -> Unit,
-    onClickDelete: () -> Unit
+    actionButton: @Composable () -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,60 +210,23 @@ private fun FooterTeam(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        Text(
-            text = "$maxMember Members",
-            fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Gray
-        )
-
         if(isJoin) {
-            OutlinedButton(
-                onClick = onClickDelete,
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(
-                    1.dp,
-                    Color.LightGray
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White
-                ),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .height(32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = Color.Red,
-                    modifier = Modifier
-                        .size(16.dp)
-                )
-            }
+            Text(
+                text = "Joined: $dateJoin",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
         } else {
-            OutlinedButton(
-                onClick = onClickJoin,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                border = BorderStroke(
-                    1.dp,
-                    Color.LightGray
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White
-                ),
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .height(32.dp)
-                    .width(48.dp)
-            ) {
-                Text(
-                    text = "Join",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp
-                )
-            }
+            Text(
+                text = "$maxMember Members",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Gray
+            )
         }
+
+        actionButton()
     }
 }
 
@@ -284,29 +241,28 @@ fun TeamCardPreview() {
         CompositionLocalProvider(LocalBackStack provides backStack) {
 
             TeamCard(
-                team = Team(
-                    idTeam = 1,
-                    creatorId = 1,
-                    teamName = "UNSCollab Mobile Team",
-                    category = "Mobile Development",
-                    description = "Membuat aplikasi kolaborasi mahasiswa menggunakan Jetpack Compose dan Firebase.",
-                    requirement = "Menguasai Kotlin dan Jetpack Compose",
-                    maxMember = 10,
-                    deadline = "10 Juni 2026",
-                    tag = listOf(
-                        "Kotlin",
-                        "Compose",
-                        "Firebase"
+                TeamResponse(
+                    team = Team(
+                        id_team = "",
+                        id_creator = "",
+                        team_name = "",
+                        category = "",
+                        description = "",
+                        requirement = "",
+                        max_member = 0,
+                        deadline = "",
+                        tag = "",
+                        team_logo = "",
+                        created_at = ""
                     ),
-                    createAt = "2 Juni 2026"
+                    creatorName = "",
+                    currentMember = 0,
+                    members = emptyList(),
                 ),
 
                 isJoin = true,
                 dateJoin = "2026-06-02",
-                statusJoin = "Accepted",
-
-                onClickJoin = {},
-                onClickDelete = {}
+                statusJoin = "Pending",
             )
         }
     }

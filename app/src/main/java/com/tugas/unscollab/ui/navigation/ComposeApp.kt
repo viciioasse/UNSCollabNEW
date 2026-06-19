@@ -1,5 +1,7 @@
 package com.tugas.unscollab.ui.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -22,6 +24,7 @@ import com.tugas.unscollab.ui.screens.team.TeamDetailScreen
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ComposeApp() {
     val backStack = rememberNavBackStack(Routes.LandingRoute)
