@@ -28,6 +28,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import coil.compose.AsyncImage
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Team
+import com.tugas.unscollab.data.response.JoinTeamResponse
 import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
@@ -36,12 +37,39 @@ import com.tugas.unscollab.ui.theme.UNSCollabTheme
 @Composable
 fun TeamCard(
     teamResponse: TeamResponse,
+    actionButton: @Composable () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    TeamCardContent(
+        teamResponse = teamResponse,
+        actionButton = actionButton,
+        modifier = modifier
+    )
+}
 
+@Composable
+fun TeamCard(
+    joinTeamResponse: JoinTeamResponse,
+    actionButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TeamCardContent(
+        teamResponse = joinTeamResponse.teamResponse,
+        isJoin = true,
+        dateJoin = joinTeamResponse.dateJoin,
+        statusJoin = joinTeamResponse.statusJoin,
+        actionButton = actionButton,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun TeamCardContent(
+    teamResponse: TeamResponse,
     isJoin: Boolean = false,
     dateJoin: String? = null,
     statusJoin: String? = null,
     actionButton: @Composable () -> Unit = {},
-
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
@@ -88,11 +116,6 @@ fun TeamCard(
             )
         }
     }
-}
-
-@Composable
-private fun TeamCardContent() {
-
 }
 
 @Composable
@@ -235,34 +258,28 @@ private fun FooterTeam(
 @Composable
 fun TeamCardPreview() {
     UNSCollabTheme {
-
         val backStack = rememberNavBackStack(Routes.AllTeamRoute)
-
         CompositionLocalProvider(LocalBackStack provides backStack) {
-
+            // Preview versi TeamResponse
             TeamCard(
                 TeamResponse(
                     team = Team(
-                        id_team = "",
-                        id_creator = "",
-                        team_name = "",
-                        category = "",
-                        description = "",
+                        id_team = "1",
+                        id_creator = "creator",
+                        team_name = "Team A",
+                        category = "Tech",
+                        description = "This is a sample description for Team A",
                         requirement = "",
-                        max_member = 0,
+                        max_member = 5,
                         deadline = "",
                         tag = "",
                         team_logo = "",
                         created_at = ""
                     ),
-                    creatorName = "",
-                    currentMember = 0,
-                    members = emptyList(),
-                ),
-
-                isJoin = true,
-                dateJoin = "2026-06-02",
-                statusJoin = "Pending",
+                    creatorName = "Company X",
+                    currentMember = 3,
+                    members = emptyList()
+                )
             )
         }
     }

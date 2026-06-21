@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.tugas.unscollab.data.model.Application
 import com.tugas.unscollab.data.remote.SupabaseApi
+import com.tugas.unscollab.data.response.ApplicationResponse
 import com.tugas.unscollab.data.response.InternshipResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -26,7 +27,6 @@ class InternshipRepository @Inject constructor(
         val internships = api.getAllInternship()
             .filter { it.approval_status.equals("Approved", ignoreCase = true) }
         return internships.map { internship ->
-            // Ditambahkan "eq." agar sesuai format query Supabase
             val company = api.getCompanyById("eq.${internship.id_company}").firstOrNull()
             InternshipResponse(
                 internship = internship,
@@ -37,7 +37,6 @@ class InternshipRepository @Inject constructor(
 
     //mengambil internship berdasarkan idInternship
     suspend fun getInternshipById(idInternship: String): InternshipResponse? {
-        // Ditambahkan "eq." agar sesuai format query Supabase
         val internship = api.getInternshipById("eq.$idInternship").firstOrNull()
         return internship?.let {
             val company = api.getCompanyById("eq.${it.id_company}").firstOrNull()
@@ -112,7 +111,7 @@ class InternshipRepository @Inject constructor(
         return true
     }
 
-    suspend fun getAppliedInternships(idUser: String): List<InternshipResponse>{
+    suspend fun getAppliedInternships(idUser: String): List<ApplicationResponse>{
         val student = api.getStudentByUserId("eq.$idUser").firstOrNull()
             ?: throw Exception("User not found")
 
@@ -124,9 +123,13 @@ class InternshipRepository @Inject constructor(
 
             val company = api.getCompanyById("eq.${internship.id_company}").firstOrNull()
 
-            InternshipResponse(
-                internship = internship,
-                companyName = company?.company_name ?: "Unknown Company"
+            ApplicationResponse(
+                internshipResponse = InternshipResponse(
+                    internship = internship,
+                    companyName = company?.company_name ?: "Unknown Company"
+                ),
+                dateApply = application.apply_date,
+                statusInternship = application.application_status
             )
         }
     }

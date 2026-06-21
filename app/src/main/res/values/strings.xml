@@ -37,4 +37,6 @@
     <string name="title_activity_my_team_card">MyTeamCard</string>
     <string name="title_activity_apply_button">ApplyButton</string>
     <string name="title_activity_delete_button">DeleteButton</string>
+    <string name="title_activity_header">Header</string>
+    <string name="title_activity_notification_card">NotificationCard</string>
 </resources>

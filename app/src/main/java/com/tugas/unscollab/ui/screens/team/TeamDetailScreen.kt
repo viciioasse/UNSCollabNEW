@@ -52,7 +52,7 @@ import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
 import com.tugas.unscollab.data.response.TeamResponse
-import com.tugas.unscollab.ui.components.CustomAlertDialog
+import com.tugas.unscollab.ui.components.dialog.CustomAlertDialog
 import com.tugas.unscollab.ui.components.button.PrimaryButton
 import com.tugas.unscollab.ui.components.header.HeaderDetail
 import com.tugas.unscollab.ui.navigation.LocalBackStack
@@ -97,7 +97,7 @@ fun TeamDetailScreen(
                     .background(Color(0xFFF5F6FA))
             ) {
                 item {
-                    TeamDetailContent(
+                    TeamDetailScreenContent(
                         teamResponse = selectedTeam!!,
                         onClickJoin = {
                             teamDetailViewModel.joinTeam(selectedTeam!!.team.id_team)
@@ -111,7 +111,7 @@ fun TeamDetailScreen(
 
 
 @Composable
-private fun TeamDetailContent(
+private fun TeamDetailScreenContent(
     teamResponse: TeamResponse,
     onClickJoin: () -> Unit
 ) {
@@ -505,7 +505,7 @@ fun PreviewTeamDetailScreen() {
     UNSCollabTheme {
         val backStack = rememberNavBackStack(Routes.TeamDetailRoute(id = ""))
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            TeamDetailContent(
+            TeamDetailScreenContent(
                 teamResponse = TeamResponse(
                     team = Team(
                         id_team = "1",

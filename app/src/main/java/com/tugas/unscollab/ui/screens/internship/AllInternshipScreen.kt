@@ -107,7 +107,7 @@ fun AllInternshipScreenContent(
             )
         }
     ) { innerPadding ->
-        AllInternshipContent(
+        AllInternshipScreenContent(
             internships = newestInternship,
             isLoading = isLoading,
             errorMessage = errorMessage,
@@ -126,7 +126,7 @@ fun AllInternshipScreenContent(
 }
 
 @Composable
-private fun AllInternshipContent(
+private fun AllInternshipScreenContent(
     internships: List<InternshipResponse>,
     isLoading: Boolean,
     errorMessage: String?,
@@ -163,9 +163,6 @@ private fun AllInternshipContent(
                 items(internships) { internship ->
                     InternshipCard(
                         internshipResponse = internship,
-
-                        dateApply = null,
-                        statusInternship = null,
                         actionButton = {}
                     )
                 }

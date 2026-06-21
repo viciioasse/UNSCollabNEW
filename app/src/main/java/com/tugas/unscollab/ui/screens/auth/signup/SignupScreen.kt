@@ -44,7 +44,7 @@ fun SignupScreen(
 
     val errorMessage by authViewModel.errorMessage.collectAsState()
 
-    SignupContent(
+    SignupScreenContent(
         errorMessage = errorMessage,
         onRegister = { name, email, password ->
             authViewModel.register(
@@ -61,7 +61,7 @@ fun SignupScreen(
 }
 
 @Composable
-private fun SignupContent(
+private fun SignupScreenContent(
     errorMessage: String?,
     onRegister: (
         name: String,
@@ -193,7 +193,7 @@ fun SignupScreenPreview() {
     UNSCollabTheme {
         // Use SignupContent directly in the preview to avoid instantiating the ViewModel,
         // which requires a factory that is not available in the preview environment.
-        SignupContent(
+        SignupScreenContent(
             errorMessage = null,
             onRegister = { _, _, _ -> }
         )

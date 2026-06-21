@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.tugas.unscollab.data.local.SessionManager
 import com.tugas.unscollab.data.repository.InternshipRepository
 import com.tugas.unscollab.data.repository.TeamRepository
-import com.tugas.unscollab.data.response.InternshipResponse
+import com.tugas.unscollab.data.response.ApplicationResponse
+import com.tugas.unscollab.data.response.JoinTeamResponse
 import com.tugas.unscollab.data.response.TeamResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,11 +23,11 @@ class ActivityViewModel @Inject constructor(
     private val _myCreatedTeams = MutableStateFlow<List<TeamResponse>>(emptyList())
     val myCreatedTeams: StateFlow<List<TeamResponse>> = _myCreatedTeams
 
-    private val _appliedInternships = MutableStateFlow<List<InternshipResponse>>(emptyList())
-    val appliedInternships: StateFlow<List<InternshipResponse>> = _appliedInternships
+    private val _appliedInternships = MutableStateFlow<List<ApplicationResponse>>(emptyList())
+    val appliedInternships: StateFlow<List<ApplicationResponse>> = _appliedInternships
 
-    private val _requestedTeams = MutableStateFlow<List<TeamResponse>>(emptyList())
-    val requestedTeams: StateFlow<List<TeamResponse>> = _requestedTeams
+    private val _requestedTeams = MutableStateFlow<List<JoinTeamResponse>>(emptyList())
+    val requestedTeams: StateFlow<List<JoinTeamResponse>> = _requestedTeams
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -38,6 +39,12 @@ class ActivityViewModel @Inject constructor(
     val session: StateFlow<Pair<String?, String?>> = _session
 
     init {
+        viewModelScope.launch {
+            sessionManager.getSession().collect { pair ->
+                _session.value = pair
+            }
+        }
+
         fetchAllActivity()
     }
 

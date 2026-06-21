@@ -150,9 +150,6 @@ fun HomeScreenContent(
                         internships.forEach { internshipResponse ->
                             InternshipCard(
                                 internshipResponse = internshipResponse,
-                                isApplied = false,
-                                dateApply = null,
-                                statusInternship = null,
                                 actionButton = { }
                             )
                         }
@@ -181,9 +178,6 @@ fun HomeScreenContent(
                         items(teams) { team ->
                             TeamCard(
                                 teamResponse = team,
-                                isJoin = false,
-                                dateJoin = null,
-                                statusJoin = null,
                                 actionButton = { }
                             )
                         }

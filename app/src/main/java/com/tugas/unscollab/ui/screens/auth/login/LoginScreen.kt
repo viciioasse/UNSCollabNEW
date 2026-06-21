@@ -66,7 +66,7 @@ fun LoginScreen(
         }
     }
 
-    LoginContent(
+    LoginScreenContent(
         email = email,
         password = password,
         onEmailChange = { email = it },
@@ -82,7 +82,7 @@ fun LoginScreen(
 }
 
 @Composable
-private fun LoginContent(
+private fun LoginScreenContent(
     email: String,
     password: String,
     onEmailChange: (String) -> Unit,
@@ -230,7 +230,7 @@ fun LoginPagePreview() {
     UNSCollabTheme {
         // Use LoginContent directly in Preview to avoid ViewModel instantiation issues.
         // Previews cannot automatically create ViewModels with dependencies (HiltViewModels).
-        LoginContent(
+        LoginScreenContent(
             email = "",
             password = "",
             onEmailChange = {},

@@ -1,10 +1,21 @@
-package com.tugas.unscollab.ui.components
+package com.tugas.unscollab.ui.components.dialog
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,59 +47,67 @@ fun CustomAlertDialog(
         properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.Companion.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            color = Color.White,
+            color = Color.Companion.White,
             tonalElevation = 4.dp
         ) {
             Column(
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .fillMaxWidth()
                     .padding(24.dp),
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.Companion.Start
             ) {
                 Text(
                     text = title,
                     fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Companion.Bold,
                     color = Color(0xFF1A1A2E)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.Companion.height(10.dp))
                 Text(
                     text = message,
                     fontSize = 14.sp,
                     color = Color(0xFF666666),
                     lineHeight = 20.sp
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.Companion.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(42.dp),
+                        modifier = Modifier.Companion.weight(1f).height(42.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = dismissButtonColor,
                             contentColor = Color(0xFF333333)
                         ),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                     ) {
-                        Text(dismissText, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Text(
+                            dismissText,
+                            fontWeight = FontWeight.Companion.Medium,
+                            fontSize = 14.sp
+                        )
                     }
                     Button(
                         onClick = {
                             onConfirm()
                             onDismiss()
                         },
-                        modifier = Modifier.weight(1f).height(42.dp),
+                        modifier = Modifier.Companion.weight(1f).height(42.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = confirmButtonColor,
-                            contentColor = Color.White
+                            contentColor = Color.Companion.White
                         ),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                     ) {
-                        Text(confirmText, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text(
+                            confirmText,
+                            fontWeight = FontWeight.Companion.SemiBold,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }
@@ -130,60 +149,60 @@ fun SuccessDialog(
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = Color.White,
+            modifier = Modifier.Companion.fillMaxWidth(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+            color = Color.Companion.White,
             tonalElevation = 4.dp
         ) {
             Column(
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .fillMaxWidth()
                     .padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.Companion.CenterHorizontally
             ) {
                 Box(
-                    modifier = Modifier
+                    modifier = Modifier.Companion
                         .size(64.dp)
                         .background(Color(0xFF4CAF50), CircleShape),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Companion.Center
                 ) {
                     Text(
                         text = "✓",
                         fontSize = 32.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        color = Color.Companion.White,
+                        fontWeight = FontWeight.Companion.Bold
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.Companion.height(16.dp))
 
                 Text(
                     text = title,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Companion.Bold,
                     color = Color(0xFF1A1A2E),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Companion.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.Companion.height(8.dp))
 
                 Text(
                     text = message,
                     fontSize = 14.sp,
                     color = Color(0xFF666666),
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Companion.Center,
                     lineHeight = 20.sp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.Companion.height(24.dp))
 
                 Button(
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                    modifier = Modifier.Companion.fillMaxWidth().height(44.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                 ) {
-                    Text(buttonText, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Text(buttonText, fontWeight = FontWeight.Companion.SemiBold, fontSize = 14.sp)
                 }
             }
         }

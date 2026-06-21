@@ -73,7 +73,7 @@ fun CreateTeamScreen(
             HeaderCreateTeam()
         }
     ) { innerPadding ->
-        CreateTeamContent(
+        CreateTeamScreenContent(
             isLoading = isLoading,
             errorMessage = errorMessage,
 
@@ -102,7 +102,7 @@ fun CreateTeamScreen(
 }
 
 @Composable
-private fun CreateTeamContent(
+private fun CreateTeamScreenContent(
     isLoading: Boolean,
     errorMessage: String?,
     teamName: String,

@@ -148,10 +148,6 @@ private fun AllTeamContent(
                 items(teams) { team ->
                     TeamCard(
                         teamResponse = team,
-
-                        isJoin = false,
-                        dateJoin = null,
-                        statusJoin = null,
                         actionButton = {}
                     )
                 }

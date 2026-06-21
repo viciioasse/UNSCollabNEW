@@ -116,7 +116,7 @@ fun InternshipDetailScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding).background(Color(0xFFF5F6FA))
             ) {
                 item {
-                    InternshipContent(
+                    InternshipDetailScreenContent(
                         internshipResponse = selectedInternship!!,
                         onClickApply = { isBottomSheetOpen = true }
                     )
@@ -142,7 +142,7 @@ fun InternshipDetailScreen(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-private fun InternshipContent(
+private fun InternshipDetailScreenContent(
     internshipResponse: InternshipResponse,
     onClickApply: () -> Unit
 ) {

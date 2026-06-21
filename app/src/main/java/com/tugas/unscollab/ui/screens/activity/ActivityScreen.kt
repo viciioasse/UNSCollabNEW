@@ -37,9 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.tugas.unscollab.data.response.InternshipResponse
+import com.tugas.unscollab.data.response.ApplicationResponse
+import com.tugas.unscollab.data.response.JoinTeamResponse
 import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.components.bottomBar.BottomBar
+import com.tugas.unscollab.ui.components.button.deleteButton
 import com.tugas.unscollab.ui.components.card.InternshipCard
 import com.tugas.unscollab.ui.components.card.MyTeamCard
 import com.tugas.unscollab.ui.components.card.TeamCard
@@ -63,7 +65,29 @@ fun ActivityScreen(
     val appliedInternships by activityViewModel.appliedInternships.collectAsState()
     val requestedTeams by activityViewModel.requestedTeams.collectAsState()
 
+    ActivityScreenContent(
+        selected = selected,
+        onSelected = { selected = it },
+        isLoading = isLoading,
+        errorMessage = errorMessage,
+        myCreatedTeams = myCreatedTeams,
+        appliedInternships = appliedInternships,
+        requestedTeams = requestedTeams
+    )
+}
+
+@Composable
+private fun ActivityScreenContent(
+    selected: String,
+    onSelected: (String) -> Unit = {},
+    isLoading: Boolean,
+    errorMessage: String?,
+    myCreatedTeams: List<TeamResponse>,
+    appliedInternships: List<ApplicationResponse>,
+    requestedTeams: List<JoinTeamResponse>
+) {
     val backStack = LocalBackStack.current
+
     Scaffold(
         topBar = {
             HeaderScreen(
@@ -99,7 +123,7 @@ fun ActivityScreen(
         ) {
             ActivityTabSelected(
                 selected = selected,
-                onSelected = { selected = it }
+                onSelected = onSelected
             )
             when(selected) {
                 "My Team" -> {
@@ -109,11 +133,15 @@ fun ActivityScreen(
                 }
 
                 "Internship" -> {
-                    InternshipContent()
+                    InternshipContent(
+                        internships = appliedInternships
+                    )
                 }
 
                 "Team" -> {
-                    TeamContent()
+                    TeamContent(
+                        teams = requestedTeams
+                    )
                 }
             }
         }
@@ -205,7 +233,7 @@ private fun MyTeamContent(
 
 @Composable
 private fun InternshipContent(
-    internships: List<InternshipResponse> = emptyList()
+    internships: List<ApplicationResponse> = emptyList()
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -215,11 +243,10 @@ private fun InternshipContent(
     ) {
         items(internships) { internship ->
             InternshipCard(
-                internshipResponse = internship,
-
-                isApplied = true,
-                dateApply = "2026-06-02",
-                statusInternship = "Accepted"
+                internshipResponse = internship.internshipResponse,
+                actionButton = {
+                    deleteButton {  }
+                }
             )
 
         }
@@ -228,7 +255,7 @@ private fun InternshipContent(
 
 @Composable
 private fun TeamContent(
-    teams: List<TeamResponse> = emptyList()
+    teams: List<JoinTeamResponse> = emptyList()
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -240,10 +267,10 @@ private fun TeamContent(
     ) {
         items(teams) { team ->
             TeamCard(
-                teamResponse = team,
-                isJoin = true,
-                dateJoin = "2026-06-02",
-                statusJoin = "Accepted"
+                teamResponse = team.teamResponse,
+                actionButton = {
+                    deleteButton {  }
+                }
             )
         }
     }
@@ -255,7 +282,15 @@ fun ActivityScreenPreview() {
     UNSCollabTheme {
         val backStack = rememberNavBackStack(Routes.ActivityRoute)
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            ActivityScreen()
+            ActivityScreenContent(
+                selected = "My Team",
+                onSelected = {},
+                isLoading = false,
+                errorMessage = null,
+                myCreatedTeams = listOf(),
+                appliedInternships = listOf(),
+                requestedTeams = listOf()
+            )
         }
     }
 }

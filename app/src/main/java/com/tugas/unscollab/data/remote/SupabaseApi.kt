@@ -3,6 +3,8 @@ package com.tugas.unscollab.data.remote
 import com.tugas.unscollab.data.model.Application
 import com.tugas.unscollab.data.model.Company
 import com.tugas.unscollab.data.model.Internship
+import com.tugas.unscollab.data.model.Notification
+import com.tugas.unscollab.data.model.NotificationRecipients
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
 import com.tugas.unscollab.data.model.TeamMember
@@ -80,15 +82,21 @@ interface SupabaseApi {
         @Part file: MultipartBody.Part
     ): ResponseBody
 
+    //get teams by id_creator
     @GET("rest/v1/teams")
     suspend fun getTeamsByCreator(@Query("id_creator") idCreator: String): List<Team>
 
     @GET("rest/v1/team_members")
-    suspend fun getTeamsByMemberByStudentId(@Query("id_student") idStudent: String): List<TeamMember>
+    suspend fun getTeamMemberByStudentId(@Query("id_student") idStudent: String): List<TeamMember>
 
+    //get application by id_student
     @GET("rest/v1/applications")
     suspend fun getApplicationByStudentId(@Query("id_student") idTeam: String): List<Application>
 
-    @GET("rest/v1/applications")
-    suspend fun getApplicationByInternshipId(@Query("id_internship") idInternship: String): List<Application>
+    //get notification by id_notification
+    @GET("rest/v1/notifications")
+    suspend fun getNotificationById(@Query("id_notification") idNotification: String): List<Notification>
+
+    @GET("rest/v1/notification_recepients")
+    suspend fun getNotificationRecipientsByUserId(@Query("id_user") idUser: String): List<NotificationRecipients>
 }

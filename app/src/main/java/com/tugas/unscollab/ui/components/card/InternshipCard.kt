@@ -31,6 +31,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import coil.compose.AsyncImage
 import com.tugas.unscollab.R
 import com.tugas.unscollab.data.model.Internship
+import com.tugas.unscollab.data.response.ApplicationResponse
 import com.tugas.unscollab.data.response.InternshipResponse
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
@@ -39,12 +40,40 @@ import com.tugas.unscollab.ui.theme.UNSCollabTheme
 @Composable
 fun InternshipCard(
     internshipResponse: InternshipResponse,
+    actionButton: @Composable () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    InternshipCardContent(
+        internshipResponse = internshipResponse,
+        actionButton = actionButton,
+        modifier = modifier
+    )
+}
 
+@Composable
+fun InternshipCard(
+    applicationResponse: ApplicationResponse,
+    actionButton: @Composable () -> Unit = {},
+
+    modifier: Modifier = Modifier
+) {
+    InternshipCardContent(
+        internshipResponse = applicationResponse.internshipResponse,
+        isApplied = true,
+        dateApply = applicationResponse.dateApply,
+        statusInternship = applicationResponse.statusInternship,
+        actionButton = actionButton,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun InternshipCardContent(
+    internshipResponse: InternshipResponse,
     isApplied: Boolean = false,
     dateApply: String? = null,
     statusInternship: String? = null,
     actionButton: @Composable () -> Unit = {},
-
     modifier: Modifier = Modifier
 ) {
     val backStack = LocalBackStack.current
@@ -287,16 +316,11 @@ private fun FooterInternship(
 @Composable
 private fun PreviewInternshipCard() {
     UNSCollabTheme {
-
         val backStack = rememberNavBackStack(Routes.HomeRoute)
-
-        CompositionLocalProvider(
-            LocalBackStack provides backStack
-        ) {
-
+        CompositionLocalProvider(LocalBackStack provides backStack) {
             InternshipCard(
-                internshipResponse = InternshipResponse(
-                    Internship(
+                InternshipResponse(
+                    internship = Internship(
                         id_internship = "",
                         id_company = "",
                         id_admin = "",
@@ -316,9 +340,7 @@ private fun PreviewInternshipCard() {
                         posted_at = "Posted At"
                     ),
                     companyName = "UNSCollab"
-                ),
-
-                isApplied = false
+                )
             )
         }
     }

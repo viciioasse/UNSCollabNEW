@@ -5,6 +5,7 @@ import android.net.Uri
 import com.tugas.unscollab.data.model.Team
 import com.tugas.unscollab.data.model.TeamMember
 import com.tugas.unscollab.data.remote.SupabaseApi
+import com.tugas.unscollab.data.response.JoinTeamResponse
 import com.tugas.unscollab.data.response.TeamResponse
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -22,16 +23,15 @@ class TeamRepository @Inject constructor(
     val api: SupabaseApi,
     @ApplicationContext private val context: Context
 ) {
+
+    //mengambil semua teams (home & all teams screen)
     suspend fun getTeams(): List<TeamResponse> {
         val teams = api.getAllTeams()
         return teams.map { team ->
-            // Menambahkan "eq." pada id_creator
             val creator = api.getStudentByStudentId("eq.${team.id_creator}").firstOrNull()
-            // Menambahkan "eq." pada id_team
             val teamMembers = api.getTeamMembersByTeamId("eq.${team.id_team}")
                 .filter { it.join_status.equals("Accepted", ignoreCase = true) }
                 .mapNotNull { member ->
-                    // Menambahkan "eq." pada id_student
                     api.getStudentByStudentId("eq.${member.id_student}").firstOrNull()
                 }
             
@@ -44,19 +44,16 @@ class TeamRepository @Inject constructor(
         }
     }
 
+    //mengambil team berdasarkan id_team (team detail screen)
     suspend fun getTeamById(idTeam: String): TeamResponse? {
-        // Menambahkan "eq." pada pencarian detail team
         val team = api.getTeamById("eq.$idTeam").firstOrNull() ?: return null
-        
-        // Menambahkan "eq." pada id_creator
+
         val creator = api.getStudentByStudentId("eq.${team.id_creator}").firstOrNull()
         val creatorName = creator?.full_name ?: "Creator Not Found"
-        
-        // Menambahkan "eq." pada id_team
+
         val teamMembers = api.getTeamMembersByTeamId("eq.${team.id_team}")
             .filter { it.join_status.equals("Accepted", ignoreCase = true) }
             .mapNotNull { member ->
-                // Menambahkan "eq." pada id_student
                 api.getStudentByStudentId("eq.${member.id_student}").firstOrNull()
             }
 
@@ -69,7 +66,6 @@ class TeamRepository @Inject constructor(
     }
 
     suspend fun joinTeam(idUser: String, idTeam: String) {
-        // Menambahkan "eq." pada idUser
         val student = api.getStudentByUserId("eq.$idUser").firstOrNull()
             ?: throw Exception("User not found")
 
@@ -176,11 +172,11 @@ class TeamRepository @Inject constructor(
         }
     }
 
-    suspend fun getJoinedTeams(idUser: String): List<TeamResponse> {
+    suspend fun getJoinedTeams(idUser: String): List<JoinTeamResponse> {
         val student = api.getStudentByUserId("eq.$idUser").firstOrNull()
             ?: throw Exception("User not found")
 
-        val memberships = api.getTeamsByMemberByStudentId("eq.${student.id_student}")
+        val memberships = api.getTeamMemberByStudentId("eq.${student.id_student}")
 
         return memberships.map { membership ->
             val team = api.getTeamById("eq.${membership.id_team}").firstOrNull()
@@ -195,11 +191,15 @@ class TeamRepository @Inject constructor(
                     api.getStudentByStudentId("eq.${member.id_student}").firstOrNull()
                 }
 
-            TeamResponse(
-                team = team,
-                creatorName = creator.full_name,
-                currentMember = teamMembers.size,
-                members = teamMembers
+            JoinTeamResponse(
+                TeamResponse(
+                    team = team,
+                    creatorName = creator.full_name,
+                    currentMember = teamMembers.size,
+                    members = teamMembers
+                ),
+                dateJoin = membership.join_at,
+                statusJoin = membership.join_status
             )
         }
     }
