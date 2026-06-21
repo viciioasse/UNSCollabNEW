@@ -33,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.tugas.unscollab.data.response.TeamResponse
 import com.tugas.unscollab.ui.components.bottomSheet.CustomBottomSheet
-import com.tugas.unscollab.ui.components.button.applyButton
 import com.tugas.unscollab.ui.components.header.HeaderScreen
 import com.tugas.unscollab.ui.components.card.TeamCard
 import com.tugas.unscollab.ui.navigation.LocalBackStack
@@ -81,8 +80,6 @@ fun AllTeamScreenContent(
         topBar = {
             HeaderScreen(
                 title = "Team",
-                value = value,
-                onValueChange = {},
                 placeholder = "Search team",
                 onSearchClick = {},
                 onFilterClick = {

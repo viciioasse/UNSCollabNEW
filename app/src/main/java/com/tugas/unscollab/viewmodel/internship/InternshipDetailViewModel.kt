@@ -7,8 +7,10 @@ import com.tugas.unscollab.data.local.SessionManager
 import com.tugas.unscollab.data.repository.InternshipRepository
 import com.tugas.unscollab.data.response.InternshipResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -45,6 +47,12 @@ class InternshipDetailViewModel @Inject constructor(
             try {
                 val internship = repository.getInternshipById(idInternship)
                 _selectedInternship.value = internship
+
+                val idUser = session.value.first
+                if (idUser != null) {
+                    val alreadyApplied = repository.checkIfApplied(idUser, idInternship)
+                    _isSuccess.value = alreadyApplied
+                }
                 _errorMessage.value = null
             } catch (e: Exception) {
                 _errorMessage.value = e.message
@@ -53,6 +61,13 @@ class InternshipDetailViewModel @Inject constructor(
             }
         }
     }
+
+    private val _isSuccess = MutableStateFlow(false)
+    val isSuccess: StateFlow<Boolean> = _isSuccess
+
+    private val _applySuccessEvent = MutableSharedFlow<Unit>()
+    val applySuccessEvent = _applySuccessEvent.asSharedFlow()
+
 
     fun applyInternship(idInternship: String, cvUri: Uri?, coverLetterUri: Uri?) {
         viewModelScope.launch {
@@ -63,14 +78,21 @@ class InternshipDetailViewModel @Inject constructor(
             }
 
             try {
-                repository.applyInternship(
+                val result = repository.applyInternship(
                     idInternship,
-                    idUser,
+                    idUser!!,
                     cvUri,
                     coverLetterUri
                 )
+
+                if(result) {
+                    _isSuccess.value = true
+                    _applySuccessEvent.emit(Unit)
+                }
             } catch (e: Exception) {
-             _errorMessage.value = e.message
+                _errorMessage.value = e.message
+            } finally {
+                _isLoading.value = false
             }
         }
     }

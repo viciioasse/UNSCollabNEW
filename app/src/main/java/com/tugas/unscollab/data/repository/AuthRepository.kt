@@ -65,6 +65,24 @@ class AuthRepository @Inject constructor(
         return Pair(user, student)
     }
 
+    suspend fun getStudentByUserId(idUser: String): Student? {
+        return api.getStudentByUserId("eq.$idUser").firstOrNull()
+    }
+
+    suspend fun createStudent(student: Student): Student {
+        return api.insertStudent(student)
+    }
+
+    fun getSSOLoginUrl(provider: String = "google"): String {
+        val projectId = "qdcjgonjjrxhghlbdarz"
+        val redirectUrl = "unscollab://login-callback"
+        return "https://$projectId.supabase.co/auth/v1/authorize?provider=$provider&redirect_to=$redirectUrl"
+    }
+
+    suspend fun saveSSOSession(id_user: String, email: String) {
+        sessionManager.saveSession(id_user, email)
+    }
+
     fun getSession() = sessionManager.getSession()
 
     suspend fun logout() = sessionManager.clearSession()

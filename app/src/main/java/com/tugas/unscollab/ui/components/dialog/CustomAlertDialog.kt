@@ -47,38 +47,38 @@ fun CustomAlertDialog(
         properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
     ) {
         Surface(
-            modifier = Modifier.Companion.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            color = Color.Companion.White,
+            color = Color.White,
             tonalElevation = 4.dp
         ) {
             Column(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
-                horizontalAlignment = Alignment.Companion.Start
+                horizontalAlignment = Alignment.Start
             ) {
                 Text(
                     text = title,
                     fontSize = 17.sp,
-                    fontWeight = FontWeight.Companion.Bold,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A1A2E)
                 )
-                Spacer(modifier = Modifier.Companion.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = message,
                     fontSize = 14.sp,
                     color = Color(0xFF666666),
                     lineHeight = 20.sp
                 )
-                Spacer(modifier = Modifier.Companion.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 Row(
-                    modifier = Modifier.Companion.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
                         onClick = onDismiss,
-                        modifier = Modifier.Companion.weight(1f).height(42.dp),
+                        modifier = Modifier.weight(1f).height(42.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = dismissButtonColor,
                             contentColor = Color(0xFF333333)
@@ -87,7 +87,7 @@ fun CustomAlertDialog(
                     ) {
                         Text(
                             dismissText,
-                            fontWeight = FontWeight.Companion.Medium,
+                            fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         )
                     }
@@ -96,16 +96,16 @@ fun CustomAlertDialog(
                             onConfirm()
                             onDismiss()
                         },
-                        modifier = Modifier.Companion.weight(1f).height(42.dp),
+                        modifier = Modifier.weight(1f).height(42.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = confirmButtonColor,
-                            contentColor = Color.Companion.White
+                            contentColor = Color.White
                         ),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                     ) {
                         Text(
                             confirmText,
-                            fontWeight = FontWeight.Companion.SemiBold,
+                            fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp
                         )
                     }
@@ -149,60 +149,60 @@ fun SuccessDialog(
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
     ) {
         Surface(
-            modifier = Modifier.Companion.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-            color = Color.Companion.White,
+            color = Color.White,
             tonalElevation = 4.dp
         ) {
             Column(
                 modifier = Modifier.Companion
                     .fillMaxWidth()
                     .padding(28.dp),
-                horizontalAlignment = Alignment.Companion.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
                     modifier = Modifier.Companion
                         .size(64.dp)
                         .background(Color(0xFF4CAF50), CircleShape),
-                    contentAlignment = Alignment.Companion.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "✓",
                         fontSize = 32.sp,
-                        color = Color.Companion.White,
-                        fontWeight = FontWeight.Companion.Bold
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                Spacer(modifier = Modifier.Companion.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = title,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Companion.Bold,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A1A2E),
-                    textAlign = TextAlign.Companion.Center
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.Companion.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = message,
                     fontSize = 14.sp,
                     color = Color(0xFF666666),
-                    textAlign = TextAlign.Companion.Center,
+                    textAlign = TextAlign.Center,
                     lineHeight = 20.sp
                 )
 
-                Spacer(modifier = Modifier.Companion.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
                     onClick = onDismiss,
-                    modifier = Modifier.Companion.fillMaxWidth().height(44.dp),
+                    modifier = Modifier.fillMaxWidth().height(44.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                 ) {
-                    Text(buttonText, fontWeight = FontWeight.Companion.SemiBold, fontSize = 14.sp)
+                    Text(buttonText, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                 }
             }
         }

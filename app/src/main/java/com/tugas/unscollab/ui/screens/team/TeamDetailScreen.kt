@@ -69,6 +69,18 @@ fun TeamDetailScreen(
     val isLoading by teamDetailViewModel.isLoading.collectAsState()
     val errorMessage by teamDetailViewModel.errorMessage.collectAsState()
 
+    val isJoined by teamDetailViewModel.isSuccess.collectAsState()
+
+    var showSuccessDialog by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(isJoined) {
+        teamDetailViewModel.joinSuccessEvent.collect {
+            showSuccessDialog = true
+        }
+    }
+
     LaunchedEffect(route.id) {
         teamDetailViewModel.getTeamById(route.id)
     }
@@ -99,6 +111,7 @@ fun TeamDetailScreen(
                 item {
                     TeamDetailScreenContent(
                         teamResponse = selectedTeam!!,
+                        isJoined = isJoined,
                         onClickJoin = {
                             teamDetailViewModel.joinTeam(selectedTeam!!.team.id_team)
                         }
@@ -107,12 +120,24 @@ fun TeamDetailScreen(
             }
         }
     }
+
+    if (showSuccessDialog) {
+        CustomAlertDialog(
+            title = "Success",
+            message = "Your request to join this team is sent.",
+            confirmText = "OK",
+            dismissText = "Yes",
+            onConfirm = { showSuccessDialog = false },
+            onDismiss = { showSuccessDialog = false }
+        )
+    }
 }
 
 
 @Composable
 private fun TeamDetailScreenContent(
     teamResponse: TeamResponse,
+    isJoined: Boolean,
     onClickJoin: () -> Unit
 ) {
     var showDialog by remember {
@@ -159,10 +184,11 @@ private fun TeamDetailScreenContent(
         )
 
         PrimaryButton(
-            text = "Join Team",
+            text = if (isJoined) "Joined" else "Join Team",
             onButtonClick = {
                 showDialog = true
             },
+            enabled = !isJoined,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -536,6 +562,7 @@ fun PreviewTeamDetailScreen() {
                         )
                     )
                 ),
+                isJoined = true,
                 onClickJoin = {}
             )
         }

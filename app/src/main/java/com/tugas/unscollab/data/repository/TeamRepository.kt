@@ -65,7 +65,18 @@ class TeamRepository @Inject constructor(
         )
     }
 
-    suspend fun joinTeam(idUser: String, idTeam: String) {
+    suspend fun checkIfJoined(idUser: String, idTeam: String): Boolean {
+        val student = api.getStudentByUserId("eq.$idUser").firstOrNull() ?: return false
+
+        val teamMembers = api.checkTeamMembers(
+            idStudent = "eq.${student.id_student}",
+            idTeam = "eq.$idTeam"
+        )
+
+        return teamMembers.isNotEmpty()
+    }
+
+    suspend fun joinTeam(idUser: String, idTeam: String): Boolean {
         val student = api.getStudentByUserId("eq.$idUser").firstOrNull()
             ?: throw Exception("User not found")
 
@@ -78,10 +89,11 @@ class TeamRepository @Inject constructor(
         val teamMember = TeamMember(
             id_student = idStudent,
             id_team = idTeam,
-            join_status = "Pending",
+            join_status = "pending",
             join_at = joinAt
         )
         api.joinTeam(teamMember)
+        return true
     }
 
     suspend fun createTeam(
@@ -110,7 +122,7 @@ class TeamRepository @Inject constructor(
                 val fileName = "team_logo_${UUID.randomUUID()}.jpg"
                 val imagePart = MultipartBody.Part.createFormData("image", fileName, requestBody)
 
-                api.uploadFileToBucket("team_logos", fileName, imagePart)
+                api.uploadFileToBucket("team_logo", fileName, imagePart)
 
                 "https://qdcjgonjjrxhghlbdarz.supabase.co/storage/v1/object/public/team_logo/$fileName"
             }
@@ -143,7 +155,7 @@ class TeamRepository @Inject constructor(
         val teamMember = TeamMember(
             id_student = student.id_student,
             id_team = team.id_team,
-            join_status = "Accepted",
+            join_status = "accepted",
             join_at = joinAt
         )
         api.joinTeam(teamMember)
@@ -157,8 +169,12 @@ class TeamRepository @Inject constructor(
         val teams = api.getTeamsByCreator("eq.${student.id_student}")
 
         return teams.map {team ->
-            val teamMembers = api.getTeamMembersByTeamId("eq.${team.id_team}")
-                .filter { it.join_status.equals("Pending", ignoreCase = true) }
+            val allMembers = api.getTeamMembersByTeamId("eq.${team.id_team}")
+
+            val joinedCount = allMembers.count { it.join_status.equals("accepted", ignoreCase = true) }
+
+            val pendingMembers = allMembers
+                .filter { it.join_status.equals("pending", ignoreCase = true) }
                 .mapNotNull { member ->
                     api.getStudentByStudentId("eq.${member.id_student}").firstOrNull()
                 }
@@ -166,10 +182,18 @@ class TeamRepository @Inject constructor(
             TeamResponse(
                 team = team,
                 creatorName = student.full_name,
-                currentMember = teamMembers.size,
-                members = teamMembers
+                currentMember = joinedCount,
+                members = pendingMembers
             )
         }
+    }
+
+    suspend fun updateMemberStatus(idTeam: String, idStudent: String, status: String) {
+        api.updateTeamMemberStatus(
+            "eq.$idTeam",
+            "eq.$idStudent",
+            mapOf("join_status" to status)
+        )
     }
 
     suspend fun getJoinedTeams(idUser: String): List<JoinTeamResponse> {
@@ -186,7 +210,7 @@ class TeamRepository @Inject constructor(
                 ?: throw Exception("Creator not found")
 
             val teamMembers = api.getTeamMembersByTeamId("eq.${team.id_team}")
-                .filter { it.join_status.equals("Accepted", ignoreCase = true) }
+                .filter { it.join_status.equals("accepted", ignoreCase = true) }
                 .mapNotNull { member ->
                     api.getStudentByStudentId("eq.${member.id_student}").firstOrNull()
                 }

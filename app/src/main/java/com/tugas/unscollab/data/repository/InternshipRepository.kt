@@ -47,6 +47,19 @@ class InternshipRepository @Inject constructor(
         }
     }
 
+    suspend fun checkIfApplied(idUser: String, idInternship: String): Boolean {
+        // 1. Dapatkan id_student dari id_user (session)
+        val student = api.getStudentByUserId("eq.$idUser").firstOrNull() ?: return false
+
+        // 2. Cek apakah ada record di tabel applications
+        val applications = api.checkApplication(
+            idStudent = "eq.${student.id_student}",
+            idInternship = "eq.$idInternship"
+        )
+
+        // 3. Jika list tidak kosong, berarti sudah pernah mendaftar
+        return applications.isNotEmpty()
+    }
 
     //apply Internship
     suspend fun applyInternship(
@@ -104,7 +117,7 @@ class InternshipRepository @Inject constructor(
             apply_date = appliedDate,
             cv = cvPart,
             cover_letter = coverLetterPart,
-            application_status = "Pending"
+            application_status = "pending"
         )
 
         api.applyInternship(application)

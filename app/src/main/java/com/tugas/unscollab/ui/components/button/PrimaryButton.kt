@@ -18,10 +18,12 @@ fun PrimaryButton(
     text: String,
     onButtonClick: () -> Unit,
     shape: RoundedCornerShape = RoundedCornerShape(50),
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Button(
         onClick = onButtonClick,
+        enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF1FABE1)
         ),

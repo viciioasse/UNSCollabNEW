@@ -49,7 +49,7 @@ fun NotificationScreen(
 
 @Composable
 private fun NotificationScreenContent(
-    notificationResponse: List<NotificationResponse> = listOf()
+    notificationResponse: List<NotificationResponse>
 ) {
     val backStack = LocalBackStack.current
     Scaffold(

@@ -6,8 +6,10 @@ import com.tugas.unscollab.data.local.SessionManager
 import com.tugas.unscollab.data.repository.TeamRepository
 import com.tugas.unscollab.data.response.TeamResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,7 +44,14 @@ class TeamDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                _selectedTeam.value = repository.getTeamById(idTeam)
+                val team = repository.getTeamById(idTeam)
+                _selectedTeam.value = team
+
+                val idUser = session.value?.trim()
+                if(idUser != null) {
+                    val alreadyJoined = repository.checkIfJoined(idUser, idTeam)
+                    _isSuccess.value = alreadyJoined
+                }
                 _errorMessage.value = null
             } catch (e: Exception) {
                 _errorMessage.value = e.message
@@ -51,6 +60,12 @@ class TeamDetailViewModel @Inject constructor(
             }
         }
     }
+
+    private val _isSuccess = MutableStateFlow(false)
+    val isSuccess: StateFlow<Boolean> = _isSuccess
+
+    private val _joinSuccessEvent = MutableSharedFlow<Unit>()
+    val joinSuccessEvent = _joinSuccessEvent.asSharedFlow()
 
     fun joinTeam(idTeam: String) {
         viewModelScope.launch {
@@ -61,9 +76,16 @@ class TeamDetailViewModel @Inject constructor(
             }
 
             try {
-                repository.joinTeam(idUser, idTeam)
+                val result = repository.joinTeam(idUser, idTeam)
+
+                if(result) {
+                    _isSuccess.value = true
+                    _joinSuccessEvent.emit(Unit)
+                }
             } catch (e: Exception) {
                 _errorMessage.value = e.message
+            } finally {
+                _isLoading.value = false
             }
         }
     }

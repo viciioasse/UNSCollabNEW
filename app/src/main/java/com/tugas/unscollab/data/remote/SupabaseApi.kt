@@ -14,6 +14,7 @@ import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
@@ -52,10 +53,16 @@ interface SupabaseApi {
     @GET("rest/v1/teams")
     suspend fun getAllTeams(): List<Team>
 
+    //check application
+    @GET("rest/v1/applications")
+    suspend fun checkApplication(
+        @Query("id_student") idStudent: String,
+        @Query("id_internship") idInternship: String
+    ): List<Application>
+
     //apply internship
-    @Multipart
     @POST("rest/v1/applications")
-    suspend fun applyInternship(@Body application: Application): Application
+    suspend fun applyInternship(@Body application: Application): Unit
 
     @GET("rest/v1/teams")
     suspend fun getTeamById(@Query("id_team") idTeam: String): List<Team>
@@ -68,7 +75,14 @@ interface SupabaseApi {
 
     //create team
     @POST("rest/v1/teams")
-    suspend fun createTeam(@Body team: Team): Team
+    suspend fun createTeam(@Body team: Team)
+
+    //check team_member
+    @GET("rest/v1/team_members")
+    suspend fun checkTeamMembers(
+        @Query("id_student") idStudent: String,
+        @Query("id_team") idTeam: String
+    ): List<TeamMember>
 
     @POST("rest/v1/team_members")
     suspend fun joinTeam(@Body teamMember: TeamMember)
@@ -99,4 +113,11 @@ interface SupabaseApi {
 
     @GET("rest/v1/notification_recepients")
     suspend fun getNotificationRecipientsByUserId(@Query("id_user") idUser: String): List<NotificationRecipients>
+
+    @PATCH("rest/v1/team_members")
+    suspend fun updateTeamMemberStatus(
+        @Query("id_team") id: String,
+        @Query("id_student") idStudent: String,
+        @Body body: Map<String, String>
+    )
 }

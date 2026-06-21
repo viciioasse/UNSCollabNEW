@@ -1,13 +1,12 @@
 package com.tugas.unscollab.ui.screens.auth.login
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -18,11 +17,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,27 +42,26 @@ import com.tugas.unscollab.viewmodel.auth.login.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    loginViewModel: LoginViewModel = hiltViewModel(),
-    navigateToHome: () -> Unit = {}
+    loginViewModel: LoginViewModel = hiltViewModel()
 ) {
     val backStack = LocalBackStack.current
+    val context = LocalContext.current
 
     val currentUser by loginViewModel.currentUser.collectAsState()
     val currentStudent by loginViewModel.currentStudent.collectAsState()
     val errorMessage by loginViewModel.errorMessage.collectAsState()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         loginViewModel.checkSession()
     }
 
     LaunchedEffect(currentUser, currentStudent) {
-        if (currentUser != null && currentStudent != null) {
+        if (currentUser != null) {
             backStack.clear()
             backStack.add(Routes.HomeRoute)
-            navigateToHome()
         }
     }
 
@@ -77,6 +76,11 @@ fun LoginScreen(
                 email,
                 password
             )
+        },
+        onSSOClick = {
+            val url = loginViewModel.onGoogleLoginClick()
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
         }
     )
 }
@@ -88,9 +92,9 @@ private fun LoginScreenContent(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     errorMessage: String?,
-    onLogin: (String, String) -> Unit
+    onLogin: (String, String) -> Unit,
+    onSSOClick: () -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -143,7 +147,7 @@ private fun LoginScreenContent(
                     }
                 )
 
-                LoginSSO()
+                LoginSSO(onButtonClick = onSSOClick)
             }
         }
     }
@@ -188,24 +192,13 @@ private fun FormLogin(
                     .padding(top = 4.dp)
             )
         }
-
-        Row(
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Forgot Password?",
-                color = Color.Black,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { }
-            )
-        }
     }
 }
 
 @Composable
-private fun LoginSSO() {
+private fun LoginSSO(
+    onButtonClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -219,7 +212,7 @@ private fun LoginSSO() {
 
         SecondaryButton(
             text = "Continue with SSO",
-            onButtonClick = { }
+            onButtonClick = onButtonClick
         )
     }
 }
@@ -236,7 +229,8 @@ fun LoginPagePreview() {
             onEmailChange = {},
             onPasswordChange = {},
             errorMessage = null,
-            onLogin = { _, _ -> }
+            onLogin = { _, _ -> },
+            onSSOClick = {}
         )
     }
 }

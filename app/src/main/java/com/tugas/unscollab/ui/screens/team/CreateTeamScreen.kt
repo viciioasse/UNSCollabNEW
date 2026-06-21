@@ -29,7 +29,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,14 +59,14 @@ fun CreateTeamScreen(
     val errorMessage by createTeamViewModel.errorMessage.collectAsState()
     val isLoading by createTeamViewModel.isLoading.collectAsState()
 
-    var teamName by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var maxMembers by remember { mutableStateOf("") }
-    var deadline by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var requirement by remember { mutableStateOf("") }
-    var tag by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var teamName by rememberSaveable { mutableStateOf("") }
+    var category by rememberSaveable { mutableStateOf("") }
+    var maxMembers by rememberSaveable { mutableStateOf("") }
+    var deadline by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
+    var requirement by rememberSaveable { mutableStateOf("") }
+    var tag by rememberSaveable { mutableStateOf("") }
+    var selectedImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
     Scaffold(
         topBar = {
@@ -233,7 +233,7 @@ private fun CreateTeamScreenContent(
                             deadline = deadline,
                             description = description,
                             requirement = requirement,
-                            tag = "",
+                            tag = tag,
                             imageUri = selectedImageUri
                         )
                     },

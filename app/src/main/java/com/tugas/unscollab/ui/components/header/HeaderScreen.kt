@@ -18,6 +18,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,14 +38,14 @@ import com.tugas.unscollab.ui.navigation.Routes
 @Composable
 fun HeaderScreen(
     title: String,
-    value: String,
-    onValueChange: (String) -> Unit = {},
     placeholder: String,
     onSearchClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     showFilterIcon: Boolean = true
 ) {
     val backStack = LocalBackStack.current
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -63,9 +67,9 @@ fun HeaderScreen(
         )
 
         SearchSection(
-            value = value,
+            value = searchQuery,
             placeholder = placeholder,
-            onValueChange = onValueChange,
+            onValueChange = { searchQuery = it },
             onSearchClick = onSearchClick,
             onFilterClick = onFilterClick,
             showFilterIcon = showFilterIcon
@@ -167,8 +171,6 @@ fun GreetingPreview() {
         CompositionLocalProvider(LocalBackStack provides backStack) {
             HeaderScreen(
                 "Internship",
-                "",
-                {},
                 "Search internship",
                 {}
             )

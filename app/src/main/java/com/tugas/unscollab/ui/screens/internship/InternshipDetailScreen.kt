@@ -67,6 +67,7 @@ import com.tugas.unscollab.data.response.InternshipResponse
 import com.tugas.unscollab.ui.components.bottomSheet.CustomBottomSheet
 import com.tugas.unscollab.ui.components.header.HeaderDetail
 import com.tugas.unscollab.ui.components.button.PrimaryButton
+import com.tugas.unscollab.ui.components.dialog.CustomAlertDialog
 import com.tugas.unscollab.ui.navigation.LocalBackStack
 import com.tugas.unscollab.ui.navigation.Routes
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
@@ -85,8 +86,20 @@ fun InternshipDetailScreen(
     val isLoading by internshipDetailViewModel.isLoading.collectAsState()
     val errorMessage by internshipDetailViewModel.errorMessage.collectAsState()
 
+    val isApplied by internshipDetailViewModel.isSuccess.collectAsState()
+
     var isBottomSheetOpen by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    var showSuccessDialog by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(isApplied) {
+        internshipDetailViewModel.applySuccessEvent.collect {
+            showSuccessDialog = true
+        }
     }
 
     val sheetState = rememberModalBottomSheetState()
@@ -118,6 +131,7 @@ fun InternshipDetailScreen(
                 item {
                     InternshipDetailScreenContent(
                         internshipResponse = selectedInternship!!,
+                        isApplied = isApplied,
                         onClickApply = { isBottomSheetOpen = true }
                     )
                 }
@@ -138,12 +152,24 @@ fun InternshipDetailScreen(
             }
         )
     }
+
+    if (showSuccessDialog) {
+        CustomAlertDialog(
+            title = "Success",
+            message = "Application submitted successfully",
+            confirmText = "OK",
+            dismissText = "Yes",
+            onConfirm = { showSuccessDialog = false },
+            onDismiss = { showSuccessDialog = false }
+        )
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun InternshipDetailScreenContent(
     internshipResponse: InternshipResponse,
+    isApplied: Boolean,
     onClickApply: () -> Unit
 ) {
     val internship = internshipResponse.internship
@@ -199,8 +225,9 @@ private fun InternshipDetailScreenContent(
         )
 
         PrimaryButton(
-            text = "Apply Now",
+            text = if (isApplied) "Applied" else "Apply Now",
             onButtonClick = onClickApply,
+            enabled = !isApplied,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()

@@ -141,8 +141,8 @@ private fun HeaderTeam(
 
         if(statusJoin != null) {
             val backgroundColor = when (statusJoin) {
-                "Accepted" -> Color(0xFF2E7D32)
-                "Pending" -> Color(0xFFF8E05D)
+                "accepted" -> Color(0xFF2E7D32)
+                "pending" -> Color(0xFFF8E05D)
                 else -> Color.Red
             }
 
@@ -228,7 +228,7 @@ private fun FooterTeam(
     actionButton: @Composable () -> Unit,
 ) {
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
@@ -238,7 +238,9 @@ private fun FooterTeam(
                 text = "Joined: $dateJoin",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray
+                color = Color.Gray,
+                modifier = Modifier
+                    .weight(.8f)
             )
         } else {
             Text(

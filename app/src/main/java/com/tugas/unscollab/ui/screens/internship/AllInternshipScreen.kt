@@ -97,8 +97,6 @@ fun AllInternshipScreenContent(
         topBar = {
             HeaderScreen(
                 title = "Internship",
-                value = "",
-                onValueChange = {},
                 placeholder = "Search internship",
                 onSearchClick = {},
                 onFilterClick = {

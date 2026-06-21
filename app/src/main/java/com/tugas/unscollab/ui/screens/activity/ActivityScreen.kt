@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,7 +73,8 @@ fun ActivityScreen(
         errorMessage = errorMessage,
         myCreatedTeams = myCreatedTeams,
         appliedInternships = appliedInternships,
-        requestedTeams = requestedTeams
+        requestedTeams = requestedTeams,
+        activityViewModel = activityViewModel
     )
 }
 
@@ -84,7 +86,8 @@ private fun ActivityScreenContent(
     errorMessage: String?,
     myCreatedTeams: List<TeamResponse>,
     appliedInternships: List<ApplicationResponse>,
-    requestedTeams: List<JoinTeamResponse>
+    requestedTeams: List<JoinTeamResponse>,
+    activityViewModel: ActivityViewModel = hiltViewModel()
 ) {
     val backStack = LocalBackStack.current
 
@@ -92,8 +95,6 @@ private fun ActivityScreenContent(
         topBar = {
             HeaderScreen(
                 title = "Activity",
-                value = "",
-                onValueChange = {},
                 placeholder = "Search activity",
                 onFilterClick = {},
                 showFilterIcon = false
@@ -113,37 +114,58 @@ private fun ActivityScreenContent(
             )
         }
     ) { innerPadding ->
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(vertical = 16.dp)
-                .fillMaxWidth()
-        ) {
-            ActivityTabSelected(
-                selected = selected,
-                onSelected = onSelected
-            )
-            when(selected) {
-                "My Team" -> {
-                    MyTeamContent(
-                        teams = myCreatedTeams
-                    )
-                }
-
-                "Internship" -> {
-                    InternshipContent(
-                        internships = appliedInternships
-                    )
-                }
-
-                "Team" -> {
-                    TeamContent(
-                        teams = requestedTeams
-                    )
+        when {
+            isLoading -> {
+                Box(Modifier.fillMaxSize().padding(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
             }
+            errorMessage != null -> {
+                Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                    Text(text = errorMessage)
+                }
+            }
+            else ->
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(vertical = 16.dp)
+                        .fillMaxWidth()
+                ) {
+                    ActivityTabSelected(
+                        selected = selected,
+                        onSelected = onSelected
+                    )
+                    when(selected) {
+                        "My Team" -> {
+                            MyTeamContent(
+                                teams = myCreatedTeams.reversed(),
+                                onAccept = { idTeam, idStudent ->
+                                    activityViewModel.handleMemberRequest(idTeam, idStudent, true)
+                                },
+                                onDecline = { idTeam, idStudent ->
+                                    activityViewModel.handleMemberRequest(idTeam, idStudent, false)
+                                }
+                            )
+                        }
+
+                        "Internship" -> {
+                            InternshipContent(
+                                internships = appliedInternships.reversed(),
+                                onDelete = { activityViewModel.removeInternshipFromUI(it) }
+                            )
+                        }
+
+                        "Team" -> {
+                            TeamContent(
+                                teams = requestedTeams.reversed(),
+                                onDelete = { activityViewModel.removeRequestedTeamFromUI(it) },
+                            )
+                        }
+                    }
+                }
         }
     }
 }
@@ -213,7 +235,9 @@ private fun ActivityTabSelected(
 
 @Composable
 private fun MyTeamContent(
-    teams: List<TeamResponse> = emptyList()
+    teams: List<TeamResponse> = emptyList(),
+    onAccept: (idTeam: String, idStudent: String) -> Unit,
+    onDecline: (idTeam: String, idStudent: String) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -221,11 +245,15 @@ private fun MyTeamContent(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        items(teams) { team ->
+        items(teams) { teamResponse ->
             MyTeamCard(
-                teamResponse = team,
-                onClickAccept = {},
-                onClickDecline = {}
+                teamResponse = teamResponse,
+                onClickAccept = { student ->
+                    onAccept(teamResponse.team.id_team, student.id_student)
+                },
+                onClickDecline = {student ->
+                    onDecline(teamResponse.team.id_team, student.id_student)
+                }
             )
         }
     }
@@ -233,7 +261,8 @@ private fun MyTeamContent(
 
 @Composable
 private fun InternshipContent(
-    internships: List<ApplicationResponse> = emptyList()
+    internships: List<ApplicationResponse> = emptyList(),
+    onDelete: (ApplicationResponse) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -242,10 +271,13 @@ private fun InternshipContent(
             .fillMaxSize()
     ) {
         items(internships) { internship ->
+            val formattedDate = internship.dateApply.split("T").firstOrNull() ?: internship.dateApply
             InternshipCard(
-                internshipResponse = internship.internshipResponse,
+                applicationResponse = internship.copy(dateApply = formattedDate),
                 actionButton = {
-                    deleteButton {  }
+                    deleteButton {
+                        onDelete(internship)
+                    }
                 }
             )
 
@@ -255,7 +287,8 @@ private fun InternshipContent(
 
 @Composable
 private fun TeamContent(
-    teams: List<JoinTeamResponse> = emptyList()
+    teams: List<JoinTeamResponse> = emptyList(),
+    onDelete: (JoinTeamResponse) -> Unit = {}
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -266,10 +299,13 @@ private fun TeamContent(
             .fillMaxSize()
     ) {
         items(teams) { team ->
+            val formattedDate = team.dateJoin.split("T").firstOrNull() ?: team.dateJoin
             TeamCard(
-                teamResponse = team.teamResponse,
+                joinTeamResponse = team.copy(dateJoin = formattedDate),
                 actionButton = {
-                    deleteButton {  }
+                    deleteButton {
+                        onDelete(team)
+                    }
                 }
             )
         }

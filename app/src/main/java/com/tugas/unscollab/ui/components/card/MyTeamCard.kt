@@ -66,15 +66,17 @@ fun MyTeamCard(
                 maxMember = teamResponse.team.max_member
             )
 
-            HorizontalDivider(
-                color = Color.LightGray
-            )
+            if(teamResponse.members.isNotEmpty()) {
+                HorizontalDivider(
+                    color = Color.LightGray
+                )
 
-            RequestJoin(
-                requests = teamResponse.members,
-                onClickAccept = onClickAccept,
-                onClickDecline = onClickDecline
-            )
+                RequestJoin(
+                    requests = teamResponse.members,
+                    onClickAccept = onClickAccept,
+                    onClickDecline = onClickDecline
+                )
+            }
         }
     }
 }

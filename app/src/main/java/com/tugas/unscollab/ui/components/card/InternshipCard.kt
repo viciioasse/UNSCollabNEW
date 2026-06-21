@@ -155,8 +155,8 @@ private fun HeaderInternship(
 
         if(statusInternship != null) {
             val backgroundColor = when (statusInternship) {
-                "Accepted" -> Color(0xFF2E7D32)
-                "Pending" -> Color(0xFFF8E05D)
+                "accepted" -> Color(0xFF2E7D32)
+                "pending" -> Color(0xFFF8E05D)
                 else -> Color.Red
             }
 
