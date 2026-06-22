@@ -1,6 +1,7 @@
 package com.tugas.unscollab.ui.components.card
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +42,7 @@ fun MyTeamCard(
     teamResponse: TeamResponse,
     onClickAccept: (Student) -> Unit,
     onClickDecline: (Student) -> Unit,
-
+    onClickDelete: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
@@ -59,11 +60,13 @@ fun MyTeamCard(
                 .padding(8.dp)
         ) {
             HeaderTeam(
+                idTeam = teamResponse.team.id_team,
                 imageUrl = teamResponse.team.team_logo,
                 teamName = teamResponse.team.team_name,
                 category = teamResponse.team.category,
                 currentmember = teamResponse.currentMember,
-                maxMember = teamResponse.team.max_member
+                maxMember = teamResponse.team.max_member,
+                onClickDelete = onClickDelete
             )
 
             if(teamResponse.members.isNotEmpty()) {
@@ -83,17 +86,25 @@ fun MyTeamCard(
 
 @Composable
 private fun HeaderTeam(
+    idTeam: String,
     imageUrl: String? = null,
     teamName: String,
     category: String,
     currentmember: Int,
     maxMember: Int,
+    onClickDelete: () -> Unit
 ) {
+    val backStack = LocalBackStack.current
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
+            .clickable {
+                backStack.add(
+                    Routes.TeamDetailRoute(id = idTeam)
+                )
+            }
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),

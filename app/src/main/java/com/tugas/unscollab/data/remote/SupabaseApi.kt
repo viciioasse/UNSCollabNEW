@@ -87,6 +87,12 @@ interface SupabaseApi {
     @POST("rest/v1/team_members")
     suspend fun joinTeam(@Body teamMember: TeamMember)
 
+    @PATCH("rest/v1/teams")
+    suspend fun updateTeam(
+        @Query("id_team") id: String,
+        @Body teamUpdates: Map<String, @JvmSuppressWildcards Any?>
+    ): retrofit2.Response<ResponseBody>
+
     //storage upload
     @Multipart
     @POST("storage/v1/object/{bucket}/{path}")

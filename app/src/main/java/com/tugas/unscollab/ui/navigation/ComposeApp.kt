@@ -20,6 +20,7 @@ import com.tugas.unscollab.ui.screens.notification.NotificationScreen
 import com.tugas.unscollab.ui.screens.profile.ProfileScreen
 import com.tugas.unscollab.ui.screens.team.AllTeamScreen
 import com.tugas.unscollab.ui.screens.team.CreateTeamScreen
+import com.tugas.unscollab.ui.screens.team.EditTeamScreen
 import com.tugas.unscollab.ui.screens.team.TeamDetailScreen
 import com.tugas.unscollab.ui.theme.UNSCollabTheme
 
@@ -55,6 +56,9 @@ fun ComposeApp() {
                     }
                     entry<Routes.TeamDetailRoute> { route ->
                         TeamDetailScreen(route = route)
+                    }
+                    entry<Routes.EditTeamRoute> { route ->
+                        EditTeamScreen(route = route)
                     }
                 }
             )

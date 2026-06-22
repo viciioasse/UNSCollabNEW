@@ -22,19 +22,19 @@
             android:theme="@style/Theme.UNSCollab">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <intent-filter android:label="filter_auth">
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="unscollab"
-                    android:host="login-callback" />
+                    android:host="login-callback"
+                    android:scheme="unscollab" />
             </intent-filter>
-
         </activity>
     </application>
 

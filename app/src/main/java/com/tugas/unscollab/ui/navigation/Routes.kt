@@ -43,4 +43,7 @@ object Routes {
 
     @Serializable
     data class TeamDetailRoute(val id: String) : NavKey
+
+    @Serializable
+    data class EditTeamRoute(val id: String) : NavKey
 }

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
 import coil.compose.AsyncImage
 import com.tugas.unscollab.R
+import com.tugas.unscollab.data.local.SessionManager
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
 import com.tugas.unscollab.data.response.TeamResponse
@@ -65,6 +67,13 @@ fun TeamDetailScreen(
     route: Routes.TeamDetailRoute,
     teamDetailViewModel: TeamDetailViewModel = viewModel ()
 ) {
+    val context = LocalContext.current
+    val backStack = LocalBackStack.current
+    val sessionManager = remember { SessionManager(context) }
+
+    val currentUserId by sessionManager.idUser.collectAsState(initial = null)
+    val currentStudentId by teamDetailViewModel.currentStudentId.collectAsState()
+
     val selectedTeam by teamDetailViewModel.selectedTeam.collectAsState()
     val isLoading by teamDetailViewModel.isLoading.collectAsState()
     val errorMessage by teamDetailViewModel.errorMessage.collectAsState()
@@ -94,10 +103,14 @@ fun TeamDetailScreen(
         }
     ) {innerPadding ->
         when {
-            isLoading -> Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+            isLoading -> Box(modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            errorMessage != null -> Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+            errorMessage != null -> Box(modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), contentAlignment = Alignment.Center) {
                 Text(text = errorMessage ?: "Unknown Error", color = Color.Red)
             }
             selectedTeam != null -> LazyColumn(
@@ -112,8 +125,12 @@ fun TeamDetailScreen(
                     TeamDetailScreenContent(
                         teamResponse = selectedTeam!!,
                         isJoined = isJoined,
+                        currentUserId = currentStudentId,
                         onClickJoin = {
                             teamDetailViewModel.joinTeam(selectedTeam!!.team.id_team)
+                        },
+                        onClickEdit = {
+                            backStack.add(Routes.EditTeamRoute(id = selectedTeam!!.team.id_team))
                         }
                     )
                 }
@@ -138,7 +155,9 @@ fun TeamDetailScreen(
 private fun TeamDetailScreenContent(
     teamResponse: TeamResponse,
     isJoined: Boolean,
-    onClickJoin: () -> Unit
+    currentUserId: String?,
+    onClickJoin: () -> Unit,
+    onClickEdit: () -> Unit
 ) {
     var showDialog by remember {
         mutableStateOf(false)
@@ -148,6 +167,8 @@ private fun TeamDetailScreenContent(
     val creatorName = teamResponse.creatorName
     val currentMember = teamResponse.currentMember
     val members = teamResponse.members
+
+    val isCreator = currentUserId == team.id_creator
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -184,11 +205,19 @@ private fun TeamDetailScreenContent(
         )
 
         PrimaryButton(
-            text = if (isJoined) "Joined" else "Join Team",
-            onButtonClick = {
-                showDialog = true
+            text = when {
+                isCreator -> "Edit Team"
+                isJoined -> "Joined"
+                else -> "Join Team"
             },
-            enabled = !isJoined,
+            onButtonClick = {
+                if (isCreator) {
+                    onClickEdit()
+                } else {
+                    showDialog = true
+                }
+            },
+            enabled = if (isCreator) true else !isJoined,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -529,42 +558,79 @@ private fun DetailMember(
 @Composable
 fun PreviewTeamDetailScreen() {
     UNSCollabTheme {
-        val backStack = rememberNavBackStack(Routes.TeamDetailRoute(id = ""))
+        // Mock data untuk navigasi agar tidak error
+        val mockRoute = Routes.TeamDetailRoute(id = "1")
+        val backStack = rememberNavBackStack(mockRoute)
+
         CompositionLocalProvider(LocalBackStack provides backStack) {
-            TeamDetailScreenContent(
-                teamResponse = TeamResponse(
-                    team = Team(
-                        id_team = "1",
-                        id_creator = "1",
-                        team_name = "Team Name",
-                        category = "Category",
-                        description = "Description",
-                        requirement = "Requirement",
-                        max_member = 5,
-                        deadline = "2023-12-31",
-                        tag = "Tag 1, Tag 2", // Preview disesuaikan menjadi String
-                        created_at = "2023-01-01"
-                    ),
-                    creatorName = "Creator Name",
-                    currentMember = 2,
-                    members = listOf(
-                        Student(
-                            id_student = "1",
-                            id_user = "1",
-                            full_name = "Member 1",
-                            nim = "M0519001"
-                        ),
-                        Student(
-                            id_student = "2",
-                            id_user = "2",
-                            full_name = "Member 2",
-                            nim = "M0519002"
-                        )
+            // Kita bungkus dengan Scaffold agar HeaderDetail muncul di preview
+            Scaffold(
+                topBar = {
+                    HeaderDetail(
+                        title = "Detail Team",
+                        onBookmarkClick = {}
                     )
-                ),
-                isJoined = true,
-                onClickJoin = {}
-            )
+                }
+            ) { innerPadding ->
+                // Box sebagai container utama dengan background abu-abu (sesuai Internship style)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFF5F6FA))
+                        .padding(innerPadding)
+                ) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        item {
+                            // Langsung panggil Content dengan data dummy agar preview terisi
+                            TeamDetailScreenContent(
+                                teamResponse = TeamResponse(
+                                    team = Team(
+                                        id_team = "1",
+                                        team_name = "Mobile Development Team",
+                                        category = "Mobile Application",
+                                        deadline = "2024-12-31",
+                                        max_member = 5,
+                                        description = "This is a team dedicated to building high-quality Android applications using Jetpack Compose and Kotlin.",
+                                        requirement = "1. Understand Kotlin fundamentals\n2. Familiar with Jetpack Compose\n3. Able to work in a team",
+                                        id_creator = "user1",
+                                        tag = "Android, Kotlin, Compose, Firebase",
+                                        team_logo = "https://example.com/logo.png",
+                                        created_at = "2026-11-12"
+                                    ),
+                                    creatorName = "Budi Santoso",
+                                    currentMember = 2,
+                                    members = listOf(
+                                        Student(
+                                            id_student = "s1",
+                                            full_name = "Budi Santoso",
+                                            nim = "M0521001",
+                                            profile_picture = "",
+                                            id_user = "user1",
+                                            major = "Informatika"
+                                        ),
+                                        Student(
+                                            id_student = "s2",
+                                            full_name = "Siti Aminah",
+                                            nim = "M0521045",
+                                            profile_picture = "",
+                                            id_user = "user2",
+                                            major = "Informatika"
+                                        )
+                                    )
+                                ),
+                                isJoined = false,
+                                currentUserId = "user3", // Bukan creator agar tombol "Join Team" muncul
+                                onClickJoin = {},
+                                onClickEdit = {}
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

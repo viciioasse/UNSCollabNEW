@@ -23,10 +23,21 @@ class TeamDetailViewModel @Inject constructor(
     private val _session = MutableStateFlow<String?>(null)
     val session: StateFlow<String?> = _session
 
+    private val _currentStudentId = MutableStateFlow<String?>(null)
+    val currentStudentId: StateFlow<String?> = _currentStudentId
+
+
     init {
         viewModelScope.launch {
             sessionManager.getSession().collect { pair ->
-                _session.value = pair.first
+                val idUser = pair.first
+
+                _session.value = idUser
+
+                if (idUser != null) {
+                    _currentStudentId.value =
+                        repository.getStudentIdByUserId(idUser)
+                }
             }
         }
     }

@@ -21,6 +21,10 @@ class SessionManager @Inject constructor(
         val EMAIL = stringPreferencesKey("email")
     }
 
+    val idUser: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_ID]
+    }
+
     suspend fun saveSession(userId: String, email: String) {
         context.dataStore.edit { preferences ->
             preferences[USER_ID] = userId

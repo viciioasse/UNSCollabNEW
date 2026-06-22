@@ -227,4 +227,58 @@ class TeamRepository @Inject constructor(
             )
         }
     }
+
+    suspend fun updateTeam(
+       idTeam: String,
+       teamName: String,
+       category: String,
+       maxMember: Int,
+       deadline: String,
+       description: String,
+       requirement: String,
+       tag: String,
+       imageUri: Uri?,
+       existingImageUrl: String?
+    ): Boolean {
+        var finalImageUrl = existingImageUrl
+
+        imageUri?.let { uri ->
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val imageBytes = inputStream?.readBytes()
+            inputStream?.close()
+
+            imageBytes?.let {
+                val requestBody = imageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                val fileName = "team_logo_${UUID.randomUUID()}.jpg"
+                val imagePart = MultipartBody.Part.createFormData("image", fileName, requestBody)
+
+                // Upload ke bucket 'team_logo'
+                api.uploadFileToBucket("team_logo", fileName, imagePart)
+
+                // Update URL gambar ke yang baru
+                finalImageUrl = "https://qdcjgonjjrxhghlbdarz.supabase.co/storage/v1/object/public/team_logo/$fileName"
+            }
+        }
+
+        // 2. Siapkan data yang akan di-update dalam bentuk Map
+        val teamUpdates = mapOf(
+            "team_name" to teamName,
+            "category" to category,
+            "description" to description,
+            "requirement" to requirement,
+            "max_member" to maxMember,
+            "deadline" to deadline,
+            "tag" to tag,
+            "team_logo" to finalImageUrl
+        )
+
+        api.updateTeam("eq.$idTeam", teamUpdates)
+        return true
+    }
+
+    suspend fun getStudentIdByUserId(idUser: String): String? {
+        return api.getStudentByUserId("eq.$idUser")
+            .firstOrNull()
+            ?.id_student
+    }
 }

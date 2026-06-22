@@ -39,4 +39,5 @@
     <string name="title_activity_delete_button">DeleteButton</string>
     <string name="title_activity_header">Header</string>
     <string name="title_activity_notification_card">NotificationCard</string>
+    <string name="title_activity_edit_team_screen">EditTeamScreen</string>
 </resources>
