@@ -8,6 +8,7 @@ import com.tugas.unscollab.data.response.NotificationResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -15,7 +16,8 @@ import javax.inject.Inject
 class NotificationViewModel @Inject constructor(
     private val notificationRepository: NotificationRepository,
     private val sessionManager: SessionManager
-): ViewModel() {
+) : ViewModel() {
+
     private val _notifications = MutableStateFlow<List<NotificationResponse>>(emptyList())
     val notifications: StateFlow<List<NotificationResponse>> = _notifications
 
@@ -33,24 +35,23 @@ class NotificationViewModel @Inject constructor(
             sessionManager.getSession().collect { pair ->
                 _session.value = pair
             }
-
-            fetchNotification()
         }
+        fetchNotification()
     }
 
     fun fetchNotification() {
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
             try {
-                sessionManager.getSession().collect { session ->
-                    val idUser = session.first
+                val session = sessionManager.getSession().first()
+                val idUser = session.first
 
-                    if (idUser != null) {
-                        val notifications = notificationRepository.getNotificationByUserId(idUser)
-                        _notifications.value = notifications
-                    } else {
-                        _errorMessage.value = "User not logged in"
-                    }
+                if (idUser != null) {
+                    val result = notificationRepository.getNotificationByUserId(idUser)
+                    _notifications.value = result
+                } else {
+                    _errorMessage.value = "User not logged in"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message

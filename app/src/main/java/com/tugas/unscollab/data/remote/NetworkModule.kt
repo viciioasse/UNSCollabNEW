@@ -25,11 +25,17 @@ object NetworkModule {
 
         val authInterceptor = Interceptor { chain ->
             val original = chain.request()
-            val request = original.newBuilder()
+            val requestBuilder = original.newBuilder()
                 .header("apikey", BuildConfig.SUPABASE_KEY)
                 .header("Authorization", "Bearer ${BuildConfig.SUPABASE_KEY}")
-                .build()
-            chain.proceed(request)
+
+            // Cek apakah request sudah bawa Content-Type dari RequestBody (misal pas upload gambar).
+            // Kalau belum ada (kayak request GET atau PATCH data teks), kita set manual ke application/json.
+            if (original.header("Content-Type") == null) {
+                requestBuilder.header("Content-Type", "application/json")
+            }
+
+            chain.proceed(requestBuilder.build())
         }
 
         return OkHttpClient.Builder()

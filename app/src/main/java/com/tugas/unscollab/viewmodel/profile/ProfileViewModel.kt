@@ -23,6 +23,13 @@ sealed interface ProfileUiState {
     data class Error(val message: String) : ProfileUiState
 }
 
+sealed interface UpdateState {
+    object Idle    : UpdateState
+    object Loading : UpdateState
+    object Success : UpdateState
+    data class Error(val message: String) : UpdateState
+}
+
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
@@ -32,20 +39,21 @@ class ProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+    private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
+    val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
+
     private var dbStudentId: String = ""
 
-    // State Dasar
-    var userName by mutableStateOf("")
-    var userId by mutableStateOf("")
-    var userProdi by mutableStateOf("")
-    var userRole by mutableStateOf("")
-    var userPhotoUri by mutableStateOf("")
+    var userName     by mutableStateOf(""); private set
+    var userId       by mutableStateOf(""); private set
+    var userProdi    by mutableStateOf(""); private set
+    var userRole     by mutableStateOf(""); private set
+    var userPhotoUri by mutableStateOf(""); private set
 
-    // State Teks (Sesuai 4 Kolom di Database)
-    var userBio by mutableStateOf("")
-    var userPortofolio by mutableStateOf("")
-    var userExperience by mutableStateOf("")
-    var userSkill by mutableStateOf("")
+    var userBio        by mutableStateOf(""); private set
+    var userPortofolio by mutableStateOf(""); private set
+    var userExperience by mutableStateOf(""); private set
+    var userSkill      by mutableStateOf(""); private set
 
     init {
         loadProfile()
@@ -56,25 +64,22 @@ class ProfileViewModel @Inject constructor(
             _uiState.value = ProfileUiState.Loading
             try {
                 val session = sessionManager.getSession().first()
-                val email = session.second
+                val email   = session.second
 
                 if (!email.isNullOrEmpty()) {
-                    profileRepository.getFullProfile(email).collect { result ->
-                        val user = result.first
-                        val student = result.second
-                        dbStudentId = student.id_student
+                    profileRepository.getFullProfile(email).collect { (user, student) ->
+                        dbStudentId    = student.id_student
 
-                        // Isi dari database ke UI
-                        userName = student.full_name
-                        userId = student.nim
-                        userProdi = student.major
-                        userRole = user.role
-                        userPhotoUri = student.profile_picture ?: ""
+                        userName       = student.full_name
+                        userId         = student.nim
+                        userProdi      = student.major
+                        userRole       = user.role
+                        userPhotoUri   = student.profile_picture ?: ""
 
-                        userBio = student.bio ?: ""
-                        userPortofolio = student.portofolio ?: ""
-                        userExperience = student.experience ?: ""
-                        userSkill = student.skill ?: ""
+                        userBio        = student.bio          ?: ""
+                        userPortofolio = student.portofolio   ?: ""
+                        userExperience = student.experience   ?: ""
+                        userSkill      = student.skill        ?: ""
 
                         _uiState.value = ProfileUiState.Success(user, student)
                     }
@@ -82,41 +87,113 @@ class ProfileViewModel @Inject constructor(
                     _uiState.value = ProfileUiState.Error("Sesi login tidak valid.")
                 }
             } catch (e: Exception) {
-                _uiState.value = ProfileUiState.Error(e.localizedMessage ?: "Terjadi kesalahan")
+                _uiState.value = ProfileUiState.Error(
+                    e.localizedMessage ?: "Terjadi kesalahan saat memuat profil."
+                )
             }
         }
     }
 
     fun updateBasicProfile(name: String, id: String, prodi: String, bio: String) {
-        userName = name
-        userId = id
+        if (!validateStudentId()) return
+
+        userName  = name
+        userId    = id
         userProdi = prodi
-        userBio = bio
+        userBio   = bio
+
         viewModelScope.launch {
-            try { profileRepository.updateBasicProfile(dbStudentId, name, id, prodi, bio) } catch (e: Exception) { e.printStackTrace() }
+            _updateState.value = UpdateState.Loading
+            try {
+                profileRepository.updateBasicProfile(dbStudentId, name, id, prodi, bio)
+                _updateState.value = UpdateState.Success
+            } catch (e: Exception) {
+                println("DEBUG: gagal updateBasicProfile")
+                _updateState.value = UpdateState.Error(
+                    e.localizedMessage ?: "Gagal menyimpan profil."
+                )
+            }
         }
     }
 
     fun updateSection(columnName: String, newText: String) {
+        if (!validateStudentId()) return
+
         when (columnName) {
             "portofolio" -> userPortofolio = newText
             "experience" -> userExperience = newText
-            "skill" -> userSkill = newText
+            "skill"      -> userSkill      = newText
+            else -> {
+                _updateState.value = UpdateState.Error("Kolom tidak dikenal.")
+                return
+            }
         }
+
         viewModelScope.launch {
-            try { profileRepository.updateStudentInfo(dbStudentId, columnName, newText) } catch (e: Exception) { e.printStackTrace() }
+            _updateState.value = UpdateState.Loading
+            try {
+                profileRepository.updateStudentInfo(dbStudentId, columnName, newText)
+                _updateState.value = UpdateState.Success
+            } catch (e: Exception) {
+                println("DEBUG: gagal updateSection")
+                _updateState.value = UpdateState.Error(
+                    e.localizedMessage ?: "Gagal menyimpan data."
+                )
+            }
         }
     }
 
-    fun updateProfilePhoto(uri: String) {
-        userPhotoUri = uri
-        // Implementasi storage nanti
+    fun updateProfilePhoto(localFilePath: String) {
+        if (!validateStudentId()) return
+
+        viewModelScope.launch {
+            _updateState.value = UpdateState.Loading
+            try {
+                val uri = android.net.Uri.parse(localFilePath)
+                val file = java.io.File(uri.path!!)
+
+                val publicUrl = profileRepository.uploadProfilePhoto(dbStudentId, file, userPhotoUri)
+
+                userPhotoUri = publicUrl
+                _updateState.value = UpdateState.Success
+            } catch (e: Exception) {
+                println("DEBUG: gagal updateProfilePhoto")
+                e.printStackTrace()
+                _updateState.value = UpdateState.Error(
+                    e.localizedMessage ?: "Gagal mengunggah foto profil."
+                )
+            }
+        }
     }
 
     fun deleteProfilePhoto() {
-        userPhotoUri = ""
+        if (!validateStudentId()) return
+
         viewModelScope.launch {
-            try { profileRepository.updateStudentInfo(dbStudentId, "profile_picture", "") } catch (e: Exception) { e.printStackTrace() }
+            _updateState.value = UpdateState.Loading
+            try {
+                profileRepository.deleteProfilePhoto(dbStudentId, userPhotoUri)
+
+                userPhotoUri = ""
+                _updateState.value = UpdateState.Success
+            } catch (e: Exception) {
+                println("DEBUG: gagal deleteProfilePhoto")
+                _updateState.value = UpdateState.Error(
+                    e.localizedMessage ?: "Gagal menghapus foto profil."
+                )
+            }
         }
+    }
+
+    fun resetUpdateState() {
+        _updateState.value = UpdateState.Idle
+    }
+
+    private fun validateStudentId(): Boolean {
+        return if (dbStudentId.isBlank()) {
+            println("DEBUG: dbStudentId kosong")
+            _updateState.value = UpdateState.Error("ID mahasiswa tidak ditemukan, coba login ulang.")
+            false
+        } else true
     }
 }

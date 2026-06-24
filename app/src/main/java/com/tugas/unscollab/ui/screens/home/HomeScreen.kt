@@ -70,8 +70,8 @@ fun HomeScreen(
     val isLoadingTeam by homeViewModel.isLoadingTeam.collectAsState()
     val errorTeam by homeViewModel.errorTeam.collectAsState()
 
-    val newestInternship = internships.takeLast(5).reversed()
-    val newestTeams = teams.takeLast(6).reversed()
+    // State pencarian di-hoist (ditaruh) di sini
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     val backStack = LocalBackStack.current
 
@@ -80,14 +80,27 @@ fun HomeScreen(
         homeViewModel.fetchTeams()
     }
 
+    // Filter List berdasarkan searchQuery
+    val filteredInternships = internships.filter {
+        it.internship.title.contains(searchQuery, ignoreCase = true) ||
+                it.companyName.contains(searchQuery, ignoreCase = true)
+    }.takeLast(5).reversed()
+
+    val filteredTeams = teams.filter {
+        it.team.team_name.contains(searchQuery, ignoreCase = true) ||
+                it.team.category.contains(searchQuery, ignoreCase = true)
+    }.takeLast(6).reversed()
+
     HomeScreenContent(
-        internships = newestInternship,
+        internships = filteredInternships,
         isLoadingInternship = isLoadingInternship,
         errorInternship = errorInternship,
-        teams = newestTeams,
+        teams = filteredTeams,
         isLoadingTeam = isLoadingTeam,
         errorTeam = errorTeam,
-        backStack = backStack
+        backStack = backStack,
+        searchQuery = searchQuery,
+        onSearchQueryChange = { searchQuery = it }
     )
 }
 
@@ -99,7 +112,9 @@ fun HomeScreenContent(
     teams: List<TeamResponse>,
     isLoadingTeam: Boolean,
     errorTeam: String?,
-    backStack: NavBackStack<NavKey>
+    backStack: NavBackStack<NavKey>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit
 ) {
     Scaffold(
         bottomBar = {
@@ -125,7 +140,10 @@ fun HomeScreenContent(
                 .background(Color(0xFFF5F6FA))
         ) {
             item {
-                HeaderSection()
+                HeaderSection(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = onSearchQueryChange
+                )
             }
 
             item {
@@ -195,9 +213,10 @@ fun HomeScreenContent(
 }
 
 @Composable
-private fun HeaderSection() {
-    var search by rememberSaveable { mutableStateOf("") }
-
+private fun HeaderSection(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -208,8 +227,8 @@ private fun HeaderSection() {
         )
 
         SearchBar(
-            value = search,
-            onValueChange = { search = it },
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
             placeholder = "Search internship or team"
         )
     }
@@ -310,7 +329,9 @@ fun HomeScreenPreview() {
                 ),
                 isLoadingTeam = false,
                 errorTeam = null,
-                backStack = backStack
+                backStack = backStack,
+                searchQuery = "",
+                onSearchQueryChange = {}
             )
         }
     }

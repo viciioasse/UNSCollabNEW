@@ -18,10 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,13 +35,13 @@ import com.tugas.unscollab.ui.navigation.Routes
 fun HeaderScreen(
     title: String,
     placeholder: String,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     showFilterIcon: Boolean = true
 ) {
     val backStack = LocalBackStack.current
-
-    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -69,7 +65,7 @@ fun HeaderScreen(
         SearchSection(
             value = searchQuery,
             placeholder = placeholder,
-            onValueChange = { searchQuery = it },
+            onValueChange = onSearchQueryChange,
             onSearchClick = onSearchClick,
             onFilterClick = onFilterClick,
             showFilterIcon = showFilterIcon
@@ -162,7 +158,6 @@ private fun SearchSection(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
@@ -170,9 +165,10 @@ fun GreetingPreview() {
         val backStack = rememberNavBackStack(Routes.HomeRoute)
         CompositionLocalProvider(LocalBackStack provides backStack) {
             HeaderScreen(
-                "Internship",
-                "Search internship",
-                {}
+                title = "Internship",
+                placeholder = "Search internship",
+                searchQuery = "",
+                onSearchQueryChange = {}
             )
         }
     }

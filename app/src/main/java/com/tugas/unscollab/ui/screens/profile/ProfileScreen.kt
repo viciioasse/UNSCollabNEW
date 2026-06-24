@@ -50,7 +50,6 @@ fun ProfileScreen(
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var showPhotoActionDialog by remember { mutableStateOf(false) }
 
-    // State untuk Generic Text Editor Dialog
     var showTextEditorDialog by remember { mutableStateOf(false) }
     var editorTitle by remember { mutableStateOf("") }
     var editorColumn by remember { mutableStateOf("") }
@@ -62,7 +61,9 @@ fun ProfileScreen(
         onResult = { uri ->
             if (uri != null) {
                 val localPath = saveImageToInternalStorage(context, uri)
-                if (localPath.isNotEmpty()) viewModel.updateProfilePhoto(localPath)
+                if (localPath.isNotEmpty()) {
+                    viewModel.updateProfilePhoto(localPath)
+                }
             }
         }
     )
@@ -117,7 +118,7 @@ fun ProfileScreen(
 
                         ProfileHeader(
                             name = viewModel.userName,
-                            nim = viewModel.userId, // NIM DIMASUKKAN DI SINI
+                            nim = viewModel.userId,
                             role = viewModel.userRole,
                             prodi = viewModel.userProdi,
                             photoUri = viewModel.userPhotoUri,
@@ -131,28 +132,24 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            // TENTANG (BIO)
                             TextSectionCard(
                                 title = "Tentang", icon = Icons.Default.Person, content = viewModel.userBio,
                                 onEditClick = { showEditProfileDialog = true }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // PENGALAMAN (EXPERIENCE)
                             TextSectionCard(
                                 title = "Pengalaman", icon = Icons.Default.Work, content = viewModel.userExperience,
                                 onEditClick = { editorTitle = "Edit Pengalaman"; editorColumn = "experience"; editorContent = viewModel.userExperience; showTextEditorDialog = true }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // PORTOFOLIO
                             TextSectionCard(
                                 title = "Portofolio", icon = Icons.Default.FolderSpecial, content = viewModel.userPortofolio,
                                 onEditClick = { editorTitle = "Edit Portofolio"; editorColumn = "portofolio"; editorContent = viewModel.userPortofolio; showTextEditorDialog = true }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // SKILL (PAKAI SISTEM KOMA)
                             SkillSectionCard(
                                 title = "Keahlian (Skill)", icon = Icons.Default.Star, content = viewModel.userSkill,
                                 onEditClick = { editorTitle = "Edit Keahlian (Gunakan Koma)"; editorColumn = "skill"; editorContent = viewModel.userSkill; showTextEditorDialog = true }
@@ -164,7 +161,6 @@ fun ProfileScreen(
             }
         }
 
-        // --- DIALOGS ---
         if (showPhotoActionDialog) {
             AlertDialog(
                 onDismissRequest = { showPhotoActionDialog = false },
@@ -204,8 +200,6 @@ fun ProfileScreen(
         }
     }
 }
-
-// ======================== KOMPONEN UI ========================
 
 @Composable
 fun ProfileHeader(name: String, nim: String, role: String, prodi: String, photoUri: String, onEditProfile: () -> Unit, onChangePhoto: () -> Unit) {
@@ -307,8 +301,6 @@ fun SkillBadge(skill: String) {
         Text(skill, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = TextDark)
     }
 }
-
-// ======================== DIALOGS ========================
 
 @Composable
 fun EditBasicProfileDialog(currentName: String, currentId: String, currentProdi: String, currentBio: String, onDismiss: () -> Unit, onSave: (String, String, String, String) -> Unit) {

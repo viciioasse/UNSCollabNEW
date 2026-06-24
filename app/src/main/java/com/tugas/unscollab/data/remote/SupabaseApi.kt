@@ -10,9 +10,13 @@ import com.tugas.unscollab.data.model.Team
 import com.tugas.unscollab.data.model.TeamMember
 import com.tugas.unscollab.data.model.User
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -21,63 +25,86 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface SupabaseApi {
-    //insert user
+
+    // ------------------------------------------------------------------ AUTH / USER
     @POST("rest/v1/users")
     suspend fun insertUser(@Body user: User): User
 
-    //insert student
+    @GET("rest/v1/users")
+    suspend fun getUserByEmail(
+        @Query("email") email: String
+    ): List<User>
+
+    // ------------------------------------------------------------------ STUDENT
     @POST("rest/v1/students")
     suspend fun insertStudent(@Body student: Student): Student
 
-    //get user by email
-    @GET("rest/v1/users")
-    suspend fun getUserByEmail(@Query("email") email: String): List<User>
-
-    //get student by id_user
     @GET("rest/v1/students")
-    suspend fun getStudentByUserId(@Query("id_user") idUser: String): List<Student>
+    suspend fun getStudentByUserId(
+        @Query("id_user") idUser: String
+    ): List<Student>
 
-    //get all internship
+    @GET("rest/v1/students")
+    suspend fun getStudentByStudentId(
+        @Query("id_student") idStudent: String
+    ): List<Student>
+
+    @PATCH("rest/v1/students")
+    suspend fun updateStudentData(
+        @Query("id_student") idStudent: String,
+        @Body updates: Map<String, @JvmSuppressWildcards Any?>,
+        @Header("Prefer") prefer: String = "return=representation"
+    ): Response<ResponseBody>
+
+    // ------------------------------------------------------------------ INTERNSHIP
     @GET("rest/v1/internships")
     suspend fun getAllInternship(): List<Internship>
 
-    //get internship by id_internship
     @GET("rest/v1/internships")
-    suspend fun getInternshipById(@Query("id_internship") idInternship: String): List<Internship>
+    suspend fun getInternshipById(
+        @Query("id_internship") idInternship: String
+    ): List<Internship>
 
-    //get company by id_company
+    // ------------------------------------------------------------------ COMPANY
     @GET("rest/v1/companies")
-    suspend fun getCompanyById(@Query("id_company") idUser: String): List<Company>
+    suspend fun getCompanyById(
+        @Query("id_company") idCompany: String
+    ): List<Company>
 
-    //get all team
+    // ------------------------------------------------------------------ TEAM
     @GET("rest/v1/teams")
     suspend fun getAllTeams(): List<Team>
 
-    //check application
-    @GET("rest/v1/applications")
-    suspend fun checkApplication(
-        @Query("id_student") idStudent: String,
-        @Query("id_internship") idInternship: String
-    ): List<Application>
-
-    //apply internship
-    @POST("rest/v1/applications")
-    suspend fun applyInternship(@Body application: Application): Unit
+    @GET("rest/v1/teams")
+    suspend fun getTeamById(
+        @Query("id_team") idTeam: String
+    ): List<Team>
 
     @GET("rest/v1/teams")
-    suspend fun getTeamById(@Query("id_team") idTeam: String): List<Team>
+    suspend fun getTeamsByCreator(
+        @Query("id_creator") idCreator: String
+    ): List<Team>
 
-    @GET("rest/v1/students")
-    suspend fun getStudentByStudentId(@Query("id_student") idStudent: String): List<Student>
-
-    @GET("rest/v1/team_members")
-    suspend fun getTeamMembersByTeamId(@Query("id_team") idTeam: String): List<TeamMember>
-
-    //create team
     @POST("rest/v1/teams")
     suspend fun createTeam(@Body team: Team)
 
-    //check team_member
+    @PATCH("rest/v1/teams")
+    suspend fun updateTeam(
+        @Query("id_team") id: String,
+        @Body teamUpdates: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<ResponseBody>
+
+    // ------------------------------------------------------------------ TEAM MEMBER
+    @GET("rest/v1/team_members")
+    suspend fun getTeamMembersByTeamId(
+        @Query("id_team") idTeam: String
+    ): List<TeamMember>
+
+    @GET("rest/v1/team_members")
+    suspend fun getTeamMemberByStudentId(
+        @Query("id_student") idStudent: String
+    ): List<TeamMember>
+
     @GET("rest/v1/team_members")
     suspend fun checkTeamMembers(
         @Query("id_student") idStudent: String,
@@ -87,13 +114,38 @@ interface SupabaseApi {
     @POST("rest/v1/team_members")
     suspend fun joinTeam(@Body teamMember: TeamMember)
 
-    @PATCH("rest/v1/teams")
-    suspend fun updateTeam(
-        @Query("id_team") id: String,
-        @Body teamUpdates: Map<String, @JvmSuppressWildcards Any?>
-    ): retrofit2.Response<ResponseBody>
+    @PATCH("rest/v1/team_members")
+    suspend fun updateTeamMemberStatus(
+        @Query("id_team") idTeam: String,
+        @Query("id_student") idStudent: String,
+        @Body body: Map<String, String>
+    ): Response<ResponseBody>
 
-    //storage upload
+    // ------------------------------------------------------------------ APPLICATION
+    @GET("rest/v1/applications")
+    suspend fun checkApplication(
+        @Query("id_student") idStudent: String,
+        @Query("id_internship") idInternship: String
+    ): List<Application>
+
+    @POST("rest/v1/applications")
+    suspend fun applyInternship(@Body application: Application)
+
+    @GET("rest/v1/applications")
+    suspend fun getApplicationByStudentId(
+        @Query("id_student") idStudent: String
+    ): List<Application>
+
+    // ------------------------------------------------------------------ NOTIFICATION
+    @GET("rest/v1/notification_recipients")
+    suspend fun getNotificationsWithDetails(
+        @Query("id_user") idUser: String,
+        @Query("select") select: String = "*,notifications(*)"
+    ): List<NotificationRecipients>
+
+    // ------------------------------------------------------------------ STORAGE
+
+    // [FUNGSI LAMA] Biar InternshipRepository & TeamRepository nggak error
     @Multipart
     @POST("storage/v1/object/{bucket}/{path}")
     suspend fun uploadFileToBucket(
@@ -102,41 +154,17 @@ interface SupabaseApi {
         @Part file: MultipartBody.Part
     ): ResponseBody
 
-    //get teams by id_creator
-    @GET("rest/v1/teams")
-    suspend fun getTeamsByCreator(@Query("id_creator") idCreator: String): List<Team>
+    // [FUNGSI BARU] Khusus buat ProfileRepository
+    @POST("storage/v1/object/{bucket}/{path}")
+    suspend fun uploadRawFileToBucket(
+        @Path("bucket") bucket: String,
+        @Path("path", encoded = true) path: String,
+        @Body file: RequestBody
+    ): ResponseBody
 
-    @GET("rest/v1/team_members")
-    suspend fun getTeamMemberByStudentId(@Query("id_student") idStudent: String): List<TeamMember>
-
-    //get application by id_student
-    @GET("rest/v1/applications")
-    suspend fun getApplicationByStudentId(@Query("id_student") idTeam: String): List<Application>
-
-    //get notification by id_notification
-    @GET("rest/v1/notifications")
-    suspend fun getNotificationById(@Query("id_notification") idNotification: String): List<Notification>
-
-    @GET("rest/v1/notification_recepients")
-    suspend fun getNotificationRecipientsByUserId(@Query("id_user") idUser: String): List<NotificationRecipients>
-
-    @PATCH("rest/v1/team_members")
-    suspend fun updateTeamMemberStatus(
-        @Query("id_team") id: String,
-        @Query("id_student") idStudent: String,
-        @Body body: Map<String, String>
-    )
-    // --- [BARU] JOIN QUERY UNTUK NOTIFICATION ---
-    @GET("rest/v1/notification_recepients")
-    suspend fun getNotificationsWithDetails(
-        @Query("id_user") idUser: String,
-        @Query("select") select: String = "*,notifications(*)"
-    ): List<NotificationRecipients> // Pastikan model ini sudah di-update menerima nested object
-
-    // --- [BARU] UPDATE DATA STUDENT UNTUK PROFILE ---
-    @PATCH("rest/v1/students")
-    suspend fun updateStudentData(
-        @Query("id_student") idStudent: String,
-        @Body updates: Map<String, @JvmSuppressWildcards Any?>
-    ): retrofit2.Response<okhttp3.ResponseBody>
+    @DELETE("storage/v1/object/{bucket}/{path}")
+    suspend fun deleteFileFromBucket(
+        @Path("bucket") bucket: String,
+        @Path("path", encoded = true) path: String
+    ): ResponseBody
 }

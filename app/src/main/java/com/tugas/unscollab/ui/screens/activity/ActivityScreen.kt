@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,11 +92,30 @@ private fun ActivityScreenContent(
 ) {
     val backStack = LocalBackStack.current
 
+    // State untuk pencarian
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+
+    // Filter List berdasarkan searchQuery
+    val filteredMyTeams = myCreatedTeams.filter {
+        it.team.team_name.contains(searchQuery, ignoreCase = true)
+    }.reversed()
+
+    val filteredInternships = appliedInternships.filter {
+        it.internshipResponse.internship.title.contains(searchQuery, ignoreCase = true) ||
+                it.internshipResponse.companyName.contains(searchQuery, ignoreCase = true)
+    }.reversed()
+
+    val filteredRequestedTeams = requestedTeams.filter {
+        it.teamResponse.team.team_name.contains(searchQuery, ignoreCase = true)
+    }.reversed()
+
     Scaffold(
         topBar = {
             HeaderScreen(
                 title = "Activity",
                 placeholder = "Search activity",
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
                 onFilterClick = {},
                 showFilterIcon = false
             )
@@ -141,7 +161,7 @@ private fun ActivityScreenContent(
                     when(selected) {
                         "My Team" -> {
                             MyTeamContent(
-                                teams = myCreatedTeams.reversed(),
+                                teams = filteredMyTeams,
                                 onAccept = { idTeam, idStudent ->
                                     activityViewModel.handleMemberRequest(idTeam, idStudent, true)
                                 },
@@ -153,14 +173,14 @@ private fun ActivityScreenContent(
 
                         "Internship" -> {
                             InternshipContent(
-                                internships = appliedInternships.reversed(),
+                                internships = filteredInternships,
                                 onDelete = { activityViewModel.removeInternshipFromUI(it) }
                             )
                         }
 
                         "Team" -> {
                             TeamContent(
-                                teams = requestedTeams.reversed(),
+                                teams = filteredRequestedTeams,
                                 onDelete = { activityViewModel.removeRequestedTeamFromUI(it) },
                             )
                         }

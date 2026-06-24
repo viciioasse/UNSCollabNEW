@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.tugas.unscollab.data.model.Notification
 import com.tugas.unscollab.data.response.NotificationResponse
 import com.tugas.unscollab.ui.components.bottomBar.BottomBar
 import com.tugas.unscollab.ui.components.card.NotificationCard
@@ -39,19 +41,28 @@ fun NotificationScreen(
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val notifications by viewModel.notifications.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.markAllRead()
     }
 
-    NotificationScreenContent(notificationResponse = notifications)
+    NotificationScreenContent(
+        notificationResponse = notifications,
+        isLoading = isLoading,
+        errorMessage = errorMessage
+    )
 }
 
 @Composable
 private fun NotificationScreenContent(
-    notificationResponse: List<NotificationResponse>
+    notificationResponse: List<NotificationResponse>,
+    isLoading: Boolean = false,
+    errorMessage: String? = null
 ) {
     val backStack = LocalBackStack.current
+
     Scaffold(
         topBar = {
             HeaderNotif()
@@ -60,7 +71,7 @@ private fun NotificationScreenContent(
             BottomBar(
                 currentRoute = "notification",
                 onNavigate = { route ->
-                    when(route) {
+                    when (route) {
                         "home" -> backStack.add(Routes.HomeRoute)
                         "activity" -> backStack.add(Routes.ActivityRoute)
                         "notification" -> backStack.add(Routes.NotificationRoute)
@@ -70,16 +81,50 @@ private fun NotificationScreenContent(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color(0xFFF5F6FA))
         ) {
-            items(notificationResponse) { notification ->
-                NotificationCard(notificationResponse = notification)
+            when {
+                // State 1: Loading
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                // State 2: Error
+                errorMessage != null -> {
+                    Text(
+                        text = errorMessage,
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                // State 3: Kosong
+                notificationResponse.isEmpty() -> {
+                    Text(
+                        text = "Tidak ada notifikasi",
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                // State 4: Ada data
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(notificationResponse) { notification ->
+                            NotificationCard(notificationResponse = notification)
+                        }
+                    }
+                }
             }
         }
     }
@@ -104,7 +149,6 @@ private fun HeaderNotif() {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
-
             Text(
                 text = "Get your up to date notification",
                 color = Color.Gray,
@@ -124,7 +168,7 @@ fun PreviewNotificationScreen() {
             NotificationScreenContent(
                 notificationResponse = listOf(
                     NotificationResponse(
-                        notification = com.tugas.unscollab.data.model.Notification(
+                        notification = Notification(
                             id_notification = "A",
                             content = "Your request to join Team A has been accepted"
                         ),
@@ -132,7 +176,7 @@ fun PreviewNotificationScreen() {
                         receiveAt = "2 minutes ago"
                     ),
                     NotificationResponse(
-                        notification = com.tugas.unscollab.data.model.Notification(
+                        notification = Notification(
                             id_notification = "B",
                             content = "Internship deadline reminder: PT. Paragon"
                         ),
