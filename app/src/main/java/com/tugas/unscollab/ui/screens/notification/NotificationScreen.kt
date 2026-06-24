@@ -107,7 +107,7 @@ private fun NotificationScreenContent(
                 // State 3: Kosong
                 notificationResponse.isEmpty() -> {
                     Text(
-                        text = "Tidak ada notifikasi",
+                        text = "No notifications available",
                         color = Color.Gray,
                         modifier = Modifier.align(Alignment.Center)
                     )

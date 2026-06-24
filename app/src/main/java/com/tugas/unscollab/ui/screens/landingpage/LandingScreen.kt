@@ -7,13 +7,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.tugas.unscollab.R
+import com.tugas.unscollab.data.local.SessionManager
 import com.tugas.unscollab.ui.components.LogoUNSCollab
 import com.tugas.unscollab.ui.components.button.PrimaryButton
 import com.tugas.unscollab.ui.components.button.SecondaryButton
@@ -23,6 +29,19 @@ import com.tugas.unscollab.ui.theme.UNSCollabTheme
 
 @Composable
 fun LandingScreen() {
+    val context = LocalContext.current
+    val backStack = LocalBackStack.current
+    val session = remember { SessionManager(context) }
+
+    val userId by session.idUser.collectAsState(initial = "loading")
+
+    LaunchedEffect(userId) {
+        if (userId != "loading" && userId != null) {
+            backStack.clear()
+            backStack.add(Routes.HomeRoute)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -34,17 +53,19 @@ fun LandingScreen() {
                 .matchParentSize()
         )
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            LogoUNSCollab()
+        if (userId == null) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterVertically),
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                LogoUNSCollab()
 
 
 
-            Buttons()
+                Buttons()
+            }
         }
     }
 }

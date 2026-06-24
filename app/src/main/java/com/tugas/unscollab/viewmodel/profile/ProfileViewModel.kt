@@ -33,7 +33,7 @@ sealed interface UpdateState {
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
-    private val sessionManager: SessionManager
+    val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -70,10 +70,10 @@ class ProfileViewModel @Inject constructor(
                     profileRepository.getFullProfile(email).collect { (user, student) ->
                         dbStudentId    = student.id_student
 
-                        userName       = student.full_name
-                        userId         = student.nim
-                        userProdi      = student.major
-                        userRole       = user.role
+                        userName       = student.full_name ?: ""
+                        userId         = student.nim ?: ""
+                        userProdi      = student.major ?: ""
+                        userRole       = user.role ?: "student"
                         userPhotoUri   = student.profile_picture ?: ""
 
                         userBio        = student.bio          ?: ""
@@ -195,5 +195,11 @@ class ProfileViewModel @Inject constructor(
             _updateState.value = UpdateState.Error("ID mahasiswa tidak ditemukan, coba login ulang.")
             false
         } else true
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            sessionManager.clearSession()
+        }
     }
 }
