@@ -281,4 +281,14 @@ class TeamRepository @Inject constructor(
             .firstOrNull()
             ?.id_student
     }
+
+    suspend fun deleteJoinRequest(idTeam: String, idUser: String): Boolean {
+        val student = api.getStudentByUserId("eq.$idUser").firstOrNull()
+            ?: throw Exception("User not found")
+
+        val idStudent = student.id_student
+
+        api.deleteTeamMember("eq.$idTeam", "eq.$idStudent")
+        return true
+    }
 }

@@ -3,7 +3,6 @@ package com.tugas.unscollab.data.remote
 import com.tugas.unscollab.data.model.Application
 import com.tugas.unscollab.data.model.Company
 import com.tugas.unscollab.data.model.Internship
-import com.tugas.unscollab.data.model.Notification
 import com.tugas.unscollab.data.model.NotificationRecipients
 import com.tugas.unscollab.data.model.Student
 import com.tugas.unscollab.data.model.Team
@@ -121,6 +120,12 @@ interface SupabaseApi {
         @Body body: Map<String, String>
     ): Response<ResponseBody>
 
+    @DELETE("rest/v1/team_members")
+    suspend fun deleteTeamMember(
+        @Query("id_team") idTeam: String,
+        @Query("id_student") idStudent: String
+    ): Response<Unit>
+
     // ------------------------------------------------------------------ APPLICATION
     @GET("rest/v1/applications")
     suspend fun checkApplication(
@@ -135,6 +140,12 @@ interface SupabaseApi {
     suspend fun getApplicationByStudentId(
         @Query("id_student") idStudent: String
     ): List<Application>
+
+    @DELETE("rest/v1/applications")
+    suspend fun deleteApplication(
+        @Query("id_internship") idInternship: String,
+        @Query("id_student") idStudent: String
+    ): Response<Unit>
 
     // ------------------------------------------------------------------ NOTIFICATION
     @GET("rest/v1/notification_recipients")

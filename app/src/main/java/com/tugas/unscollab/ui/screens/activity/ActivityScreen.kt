@@ -174,14 +174,18 @@ private fun ActivityScreenContent(
                         "Internship" -> {
                             InternshipContent(
                                 internships = filteredInternships,
-                                onDelete = { activityViewModel.removeInternshipFromUI(it) }
+                                onCancel = { item ->
+                                    activityViewModel.cancelApplication(item.internshipResponse.internship.id_internship)
+                                }
                             )
                         }
 
                         "Team" -> {
                             TeamContent(
                                 teams = filteredRequestedTeams,
-                                onDelete = { activityViewModel.removeRequestedTeamFromUI(it) },
+                                onCancel = { item ->
+                                    activityViewModel.cancelTeamRequest(item.teamResponse.team.id_team)
+                                },
                             )
                         }
                     }
@@ -282,7 +286,7 @@ private fun MyTeamContent(
 @Composable
 private fun InternshipContent(
     internships: List<ApplicationResponse> = emptyList(),
-    onDelete: (ApplicationResponse) -> Unit
+    onCancel: (ApplicationResponse) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -296,7 +300,7 @@ private fun InternshipContent(
                 applicationResponse = internship.copy(dateApply = formattedDate),
                 actionButton = {
                     deleteButton {
-                        onDelete(internship)
+                        onCancel(internship)
                     }
                 }
             )
@@ -308,7 +312,7 @@ private fun InternshipContent(
 @Composable
 private fun TeamContent(
     teams: List<JoinTeamResponse> = emptyList(),
-    onDelete: (JoinTeamResponse) -> Unit = {}
+    onCancel: (JoinTeamResponse) -> Unit = {}
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -324,7 +328,7 @@ private fun TeamContent(
                 joinTeamResponse = team.copy(dateJoin = formattedDate),
                 actionButton = {
                     deleteButton {
-                        onDelete(team)
+                        onCancel(team)
                     }
                 }
             )

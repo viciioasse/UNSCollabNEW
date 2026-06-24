@@ -146,4 +146,14 @@ class InternshipRepository @Inject constructor(
             )
         }
     }
+
+    suspend fun deleteApplication(idInternship: String, idUser: String): Boolean {
+        val student = api.getStudentByUserId("eq.$idUser").firstOrNull()
+            ?: throw Exception("User not found")
+
+        val idStudent = student.id_student
+
+        api.deleteApplication("eq.$idInternship", "eq.$idStudent")
+        return true
+    }
 }

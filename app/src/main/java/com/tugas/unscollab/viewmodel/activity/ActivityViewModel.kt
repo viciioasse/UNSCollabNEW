@@ -94,23 +94,6 @@ class ActivityViewModel @Inject constructor(
         }
     }
 
-    fun removeInternshipFromUI(item: ApplicationResponse) {
-        // Memperbarui StateFlow dengan list baru yang sudah membuang item tersebut
-        val id = item.internshipResponse.internship.id_internship
-        _dismissedIds.value += id
-        _appliedInternships.value = _appliedInternships.value.filter { it.internshipResponse.internship.id_internship != id }
-    }
-
-    fun removeRequestedTeamFromUI(item: JoinTeamResponse) {
-        val id = item.teamResponse.team.id_team
-        _dismissedIds.value += id
-        _requestedTeams.value = _requestedTeams.value.filter { it.teamResponse.team.id_team != id }
-    }
-
-    fun removeMyTeamFromUI(item: TeamResponse) {
-        _myCreatedTeams.value = _myCreatedTeams.value.filter { it != item }
-    }
-
     fun handleMemberRequest(idTeam: String, idStudent: String, isAccepted: Boolean) {
         viewModelScope.launch {
             try {
@@ -124,16 +107,31 @@ class ActivityViewModel @Inject constructor(
         }
     }
 
-    fun logout() {
+    fun cancelApplication(idInternship: String) {
         viewModelScope.launch {
-            // Menghapus session (id_user dan email) dari local storage
-            sessionManager.clearSession()
+            try {
+                val idUser = _session.value.first
+                if(idUser != null) {
+                    internshipRepository.deleteApplication(idInternship, idUser)
+                    fetchAllActivity()
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+            }
+        }
+    }
 
-            // Opsional: Bersihkan state lokal jika perlu
-            _myCreatedTeams.value = emptyList()
-            _appliedInternships.value = emptyList()
-            _requestedTeams.value = emptyList()
-            _session.value = Pair(null, null)
+    fun cancelTeamRequest(idTeam: String) {
+        viewModelScope.launch {
+            try {
+                val idUser = _session.value.first
+                if(idUser != null) {
+                    teamRepository.deleteJoinRequest(idTeam, idUser)
+                    fetchAllActivity()
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+            }
         }
     }
 }
