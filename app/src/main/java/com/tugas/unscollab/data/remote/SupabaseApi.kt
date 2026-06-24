@@ -126,4 +126,17 @@ interface SupabaseApi {
         @Query("id_student") idStudent: String,
         @Body body: Map<String, String>
     )
+    // --- [BARU] JOIN QUERY UNTUK NOTIFICATION ---
+    @GET("rest/v1/notification_recepients")
+    suspend fun getNotificationsWithDetails(
+        @Query("id_user") idUser: String,
+        @Query("select") select: String = "*,notifications(*)"
+    ): List<NotificationRecipients> // Pastikan model ini sudah di-update menerima nested object
+
+    // --- [BARU] UPDATE DATA STUDENT UNTUK PROFILE ---
+    @PATCH("rest/v1/students")
+    suspend fun updateStudentData(
+        @Query("id_student") idStudent: String,
+        @Body updates: Map<String, @JvmSuppressWildcards Any?>
+    ): retrofit2.Response<okhttp3.ResponseBody>
 }
